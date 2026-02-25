@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mental Wellness Buddy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at 25% 25%, #7fa8ff, #6fd6c8 45%, #5865f2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1400px;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
+            background-size: 44px 44px;
+            opacity: 0.55;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 30% 40%, rgba(255,255,255,0.22), transparent 42%),
+                radial-gradient(circle at 70% 60%, rgba(120,140,255,0.22), transparent 46%);
+            animation: ambientFloat 11s ease-in-out infinite alternate;
+        }
+
+        @keyframes ambientFloat {
+            from { transform: translateY(-8px); }
+            to { transform: translateY(10px); }
+        }
+
+        #chat-wrapper {
+            width: min(720px, 92vw);
+            height: 680px;
+            backdrop-filter: blur(26px) saturate(150%);
+            -webkit-backdrop-filter: blur(26px) saturate(150%);
+            background: rgba(255,255,255,0.34);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.42);
+            box-shadow:
+                0 28px 75px rgba(0,0,0,0.32),
+                inset 0 1px 0 rgba(255,255,255,0.55),
+                0 0 36px rgba(88,101,242,0.22);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.18s cubic-bezier(.22,.61,.36,1),
+                        box-shadow 0.25s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
+            position: relative;
+            z-index: 1;
+        }
+
+        #chat-header {
+            background: linear-gradient(135deg, #5865f2, #8fa2ff);
+            color: white;
+            padding: 18px;
+        }
+
+        #header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #avatar-wrapper {
+            position: relative;
+            width: 52px;
+            height: 52px;
+        }
+
+        #coach-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.9);
+        }
+
+        #status-dot {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 11px;
+            height: 11px;
+            background: #46f58f;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(70,245,143,0.9);
+            animation: livePulse 1.9s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0% { transform: scale(1); opacity: .9; }
+            50% { transform: scale(1.28); opacity: 1; }
+            100% { transform: scale(1); opacity: .9; }
+        }
+
+        #title-block h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.35px;
+        }
+
+        #title-block p {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            opacity: 0.92;
+        }
+
+        #welcome-note {
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.92;
+            margin-top: 6px;
+        }
+
+        #chat-messages {
+            flex: 1;
+            padding: 20px 26px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.20);
+        }
+
+        .bubble {
+            max-width: 68%;
+            padding: 14px 18px;
+            margin: 10px 0;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 14px;
+            animation: messageRise .26s ease;
+        }
+
+        @keyframes messageRise {
+            from { opacity: 0; transform: translateY(10px) scale(.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .timestamp {
+            font-size: 10px;
+            opacity: 0.65;
+            margin-top: 4px;
+        }
+
+        .user-bubble {
+            background: linear-gradient(135deg, #5865f2, #8fa2ff);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            box-shadow: 0 6px 18px rgba(88,101,242,0.45);
+        }
+
+        .bot-bubble {
+            background: rgba(238,242,255,0.96);
+            color: #222;
+            margin-right: auto;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+        }
+
+        #typing {
+            font-size: 12px;
+            color: #555;
+            padding-left: 26px;
+            display: none;
+        }
+
+        #chat-input-area {
+            display: flex;
+            padding: 16px;
+            background: rgba(255,255,255,0.88);
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 13px;
+            border-radius: 12px;
+            border: 1px solid #cfd6ff;
+            outline: none;
+            font-size: 14px;
+            transition: all .18s ease;
+        }
+
+        #userInput:focus {
+            border-color: #6b7cff;
+            box-shadow: 0 0 0 3px rgba(107,124,255,0.18);
+        }
+
+        #sendBtn {
+            margin-left: 12px;
+            padding: 13px 24px;
+            border: none;
+            background: linear-gradient(135deg, #5865f2, #8fa2ff);
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all .18s ease;
+        }
+
+        #sendBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(88,101,242,0.42);
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="chat-wrapper">
+
+    <div id="chat-header">
+        <div id="header-row">
+            <div id="avatar-wrapper">
+                <img id="coach-avatar" src="/static/coach.png" alt="Wellness Coach">
+                <div id="status-dot"></div>
+            </div>
+            <div id="title-block">
+                <h2>Mental Wellness Buddy</h2>
+                <p>Your calm and supportive AI coach</p>
+            </div>
+        </div>
+        <div id="welcome-note">
+            You are safe here. Share what is on your mind.
+        </div>
+    </div>
+
+    <div id="chat-messages"></div>
+    <div id="typing">Buddy is typing...</div>
+
+    <div id="chat-input-area">
+        <input id="userInput" type="text" placeholder="Type how you feel..." />
+        <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+
+</div>
+
+<script>
+function formatTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const chat = document.getElementById("chat-messages");
+
+    chat.innerHTML += `
+        <div class="bubble user-bubble">
+            ${text}
+            <div class="timestamp">${formatTime()}</div>
+        </div>
+    `;
+
+    chat.scrollTop = chat.scrollHeight;
+    input.value = "";
+
+    document.getElementById("typing").style.display = "block";
+
+    const response = await fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message: text})
+    });
+
+    const data = await response.json();
+    document.getElementById("typing").style.display = "none";
+
+    chat.innerHTML += `
+        <div class="bubble bot-bubble">
+            ${data.reply}
+            <div class="timestamp">${formatTime()}</div>
+        </div>
+    `;
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+document.getElementById("userInput")
+.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+});
+
+const floatingCard = document.getElementById("chat-wrapper");
+
+document.addEventListener("mousemove", e => {
+    const rect = floatingCard.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const dx = (e.clientX - cx) / rect.width;
+    const dy = (e.clientY - cy) / rect.height;
+
+    floatingCard.style.transform =
+        `rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg) translateY(-4px)`;
+});
+
+document.addEventListener("mouseleave", () => {
+    floatingCard.style.transform = "rotateX(0deg) rotateY(0deg) translateY(0)";
+});
+</script>
+
+</body>
+</html>
