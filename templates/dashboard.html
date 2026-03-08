@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Mental Wellness Dashboard</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Segoe UI, Arial;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: auto;
+            padding-top: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .chart-box {
+            height: 300px;
+        }
+
+        .recent {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .entry {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 10px;
+            background: #5865f2;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #4752d4;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+
+            <div class="title">📊 Mood Analytics Dashboard</div>
+
+            <div>
+                <a href="/" class="btn">Chat</a>
+                <a href="/logout" class="btn">Logout</a>
+            </div>
+
+        </div>
+
+
+        <!-- Emotion Chart -->
+
+        <div class="card">
+
+            <h3>Emotion Distribution</h3>
+
+            <div class="chart-box">
+                <canvas id="emotionChart"></canvas>
+            </div>
+
+        </div>
+
+
+        <!-- Mood Timeline -->
+
+        <div class="card">
+
+            <h3>Mood Timeline</h3>
+
+            <div class="chart-box">
+                <canvas id="timelineChart"></canvas>
+            </div>
+
+        </div>
+
+
+        <!-- Recent Entries -->
+
+        <div class="card">
+
+            <h3>Recent Emotional Entries</h3>
+
+            <div id="recentEntries" class="recent"></div>
+
+        </div>
+
+
+        <!-- Wellness Insight -->
+
+        <div class="card">
+
+            <h3>AI Wellness Insight</h3>
+
+            <p id="insightText">
+                Analyzing your emotional trends...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        async function loadMoodData() {
+
+            const res = await fetch("/mood-data");
+            const data = await res.json();
+
+            let emotions = {};
+            let timeline = [];
+            let labels = [];
+
+            data.forEach(row => {
+
+                const emotion = row[0];
+                const time = row[1];
+
+                if (!emotions[emotion]) {
+                    emotions[emotion] = 0;
+                }
+
+                emotions[emotion]++;
+
+                labels.push(time);
+                timeline.push(emotion);
+
+            });
+
+            renderEmotionChart(emotions);
+            renderTimelineChart(labels, timeline);
+            renderEntries(data);
+            generateInsight(emotions);
+
+        }
+
+        function renderEmotionChart(emotions) {
+
+            const ctx = document.getElementById("emotionChart");
+
+            new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: Object.keys(emotions),
+                    datasets: [{
+                        data: Object.values(emotions),
+                        backgroundColor: [
+                            "#ff6384",
+                            "#36a2eb",
+                            "#ffce56",
+                            "#4bc0c0",
+                            "#9966ff"
+                        ]
+                    }]
+                }
+            });
+
+        }
+
+        function renderTimelineChart(labels, timeline) {
+
+            const ctx = document.getElementById("timelineChart");
+
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Emotion Activity",
+                        data: timeline.map((_, i) => i + 1),
+                        borderColor: "#ffffff",
+                        fill: false
+                    }]
+                }
+            });
+
+        }
+
+        function renderEntries(data) {
+
+            const container = document.getElementById("recentEntries");
+
+            data.slice(-5).reverse().forEach(row => {
+
+                const div = document.createElement("div");
+                div.className = "entry";
+
+                div.innerText = `${row[0]} • ${row[1]}`;
+
+                container.appendChild(div);
+
+            });
+
+        }
+
+        function generateInsight(emotions) {
+
+            let dominant = Object.keys(emotions).reduce((a, b) => emotions[a] > emotions[b] ? a : b);
+
+            let text = "";
+
+            if (dominant === "sadness")
+                text = "You have experienced sadness frequently. Consider taking breaks and talking to someone you trust.";
+
+            else if (dominant === "joy")
+                text = "You seem to be feeling positive lately. Keep doing what supports your well-being.";
+
+            else if (dominant === "fear")
+                text = "You may be experiencing anxiety. Breathing exercises or mindfulness may help.";
+
+            else
+                text = "Your emotional state appears balanced recently.";
+
+            document.getElementById("insightText").innerText = text;
+
+        }
+
+        loadMoodData();
+
+    </script>
+
+</body>
+
+</html>

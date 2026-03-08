@@ -1,77 +1,55 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>Mental Wellness Buddy</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
             margin: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at 25% 25%, #7fa8ff, #6fd6c8 45%, #5865f2 100%);
+            font-family: Segoe UI, Arial;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1400px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
             overflow: hidden;
+            transition: 0.3s;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
-            background-size: 44px 44px;
-            opacity: 0.55;
-        }
-
-        body::after {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(circle at 30% 40%, rgba(255,255,255,0.22), transparent 42%),
-                radial-gradient(circle at 70% 60%, rgba(120,140,255,0.22), transparent 46%);
-            animation: ambientFloat 11s ease-in-out infinite alternate;
-        }
-
-        @keyframes ambientFloat {
-            from { transform: translateY(-8px); }
-            to { transform: translateY(10px); }
+        .dark-mode {
+            background: #121212;
         }
 
         #chat-wrapper {
-            width: min(720px, 92vw);
+            width: min(750px, 92vw);
             height: 680px;
-            backdrop-filter: blur(26px) saturate(150%);
-            -webkit-backdrop-filter: blur(26px) saturate(150%);
-            background: rgba(255,255,255,0.34);
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.42);
-            box-shadow:
-                0 28px 75px rgba(0,0,0,0.32),
-                inset 0 1px 0 rgba(255,255,255,0.55),
-                0 0 36px rgba(88,101,242,0.22);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            transition: transform 0.18s cubic-bezier(.22,.61,.36,1),
-                        box-shadow 0.25s ease;
-            transform-style: preserve-3d;
-            will-change: transform;
-            position: relative;
-            z-index: 1;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.15s ease;
+        }
+
+        .dark-mode #chat-wrapper {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
         }
 
         #chat-header {
             background: linear-gradient(135deg, #5865f2, #8fa2ff);
-            color: white;
             padding: 18px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         #header-row {
@@ -82,245 +60,306 @@
 
         #avatar-wrapper {
             position: relative;
-            width: 52px;
-            height: 52px;
+            width: 50px;
+            height: 50px;
         }
 
         #coach-avatar {
-            width: 52px;
-            height: 52px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.9);
+            border: 2px solid white;
         }
 
         #status-dot {
             position: absolute;
-            bottom: -1px;
-            right: -1px;
-            width: 11px;
-            height: 11px;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
             background: #46f58f;
             border-radius: 50%;
             border: 2px solid white;
-            box-shadow: 0 0 10px rgba(70,245,143,0.9);
-            animation: livePulse 1.9s ease-in-out infinite;
+            animation: pulse 1.6s infinite;
         }
 
-        @keyframes livePulse {
-            0% { transform: scale(1); opacity: .9; }
-            50% { transform: scale(1.28); opacity: 1; }
-            100% { transform: scale(1); opacity: .9; }
+        @keyframes pulse {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.3)
+            }
+
+            100% {
+                transform: scale(1)
+            }
         }
 
-        #title-block h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.35px;
-        }
-
-        #title-block p {
-            margin: 2px 0 0 0;
-            font-size: 12px;
-            opacity: 0.92;
-        }
-
-        #welcome-note {
-            text-align: center;
-            font-size: 12px;
-            opacity: 0.92;
-            margin-top: 6px;
+        .header-buttons {
+            display: flex;
+            gap: 8px;
         }
 
         #chat-messages {
             flex: 1;
-            padding: 20px 26px;
             overflow-y: auto;
-            background: rgba(255,255,255,0.20);
+            padding: 20px;
         }
 
         .bubble {
-            max-width: 68%;
-            padding: 14px 18px;
+            max-width: 70%;
+            padding: 14px;
             margin: 10px 0;
             border-radius: 18px;
-            line-height: 1.5;
             font-size: 14px;
-            animation: messageRise .26s ease;
         }
 
-        @keyframes messageRise {
-            from { opacity: 0; transform: translateY(10px) scale(.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        .user-bubble {
+            background: linear-gradient(135deg, #5865f2, #7c8cff);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-bubble {
+            background: #eef1ff;
+            color: #222;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            white-space: pre-line;
+        }
+
+        .dark-mode .bot-bubble {
+            background: #2b2b2b;
+            color: white;
+        }
+
+        .emergency-bubble {
+            background: #ffebee;
+            border: 2px solid #ff4d4d;
+            color: #7a0000;
+            font-weight: 600;
+            white-space: pre-line;
         }
 
         .timestamp {
             font-size: 10px;
-            opacity: 0.65;
+            opacity: 0.6;
             margin-top: 4px;
         }
 
-        .user-bubble {
-            background: linear-gradient(135deg, #5865f2, #8fa2ff);
-            color: white;
-            margin-left: auto;
-            text-align: right;
-            box-shadow: 0 6px 18px rgba(88,101,242,0.45);
-        }
-
-        .bot-bubble {
-            background: rgba(238,242,255,0.96);
-            color: #222;
-            margin-right: auto;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.10);
-        }
-
         #typing {
-            font-size: 12px;
-            color: #555;
-            padding-left: 26px;
+            font-size: 13px;
+            padding-left: 20px;
             display: none;
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 0.3
+            }
+
+            50% {
+                opacity: 1
+            }
+
+            100% {
+                opacity: 0.3
+            }
         }
 
         #chat-input-area {
             display: flex;
-            padding: 16px;
-            background: rgba(255,255,255,0.88);
-            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 15px;
+            background: white;
+            gap: 10px;
+        }
+
+        .dark-mode #chat-input-area {
+            background: #1f1f1f;
         }
 
         #userInput {
             flex: 1;
-            padding: 13px;
-            border-radius: 12px;
-            border: 1px solid #cfd6ff;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
             outline: none;
-            font-size: 14px;
-            transition: all .18s ease;
         }
 
-        #userInput:focus {
-            border-color: #6b7cff;
-            box-shadow: 0 0 0 3px rgba(107,124,255,0.18);
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         #sendBtn {
-            margin-left: 12px;
-            padding: 13px 24px;
-            border: none;
-            background: linear-gradient(135deg, #5865f2, #8fa2ff);
+            background: #5865f2;
             color: white;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all .18s ease;
-        }
-
-        #sendBtn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 24px rgba(88,101,242,0.42);
         }
     </style>
+
 </head>
 
 <body>
 
-<div id="chat-wrapper">
+    <div id="chat-wrapper">
 
-    <div id="chat-header">
-        <div id="header-row">
-            <div id="avatar-wrapper">
-                <img id="coach-avatar" src="/static/coach.png" alt="Wellness Coach">
-                <div id="status-dot"></div>
+        <div id="chat-header">
+
+            <div id="header-row">
+
+                <div id="avatar-wrapper">
+                    <img id="coach-avatar" src="/static/coach.png">
+                    <div id="status-dot"></div>
+                </div>
+
+                <div>
+                    <h2 style="margin:0">Mental Wellness Buddy</h2>
+                    <p style="margin:0;font-size:12px">Your supportive AI coach</p>
+                </div>
+
             </div>
-            <div id="title-block">
-                <h2>Mental Wellness Buddy</h2>
-                <p>Your calm and supportive AI coach</p>
+
+            <div class="header-buttons">
+
+                <button onclick="toggleDark()" class="btn btn-light btn-sm">🌙</button>
+
+                <a href="/dashboard" class="btn btn-success btn-sm">
+                    📊 Dashboard
+                </a>
+
+                <a href="/logout" class="btn btn-danger btn-sm">
+                    Logout
+                </a>
+
             </div>
+
         </div>
-        <div id="welcome-note">
-            You are safe here. Share what is on your mind.
+
+        <div id="chat-messages"></div>
+
+        <div id="typing">🤖 Buddy is typing...</div>
+
+        <div id="chat-input-area">
+
+            <input id="userInput" placeholder="Type how you feel...">
+
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+
         </div>
+
     </div>
 
-    <div id="chat-messages"></div>
-    <div id="typing">Buddy is typing...</div>
+    <script>
 
-    <div id="chat-input-area">
-        <input id="userInput" type="text" placeholder="Type how you feel..." />
-        <button id="sendBtn" onclick="sendMessage()">Send</button>
-    </div>
+        function formatTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
+        function getEmoji(emotion) {
+
+            const emojis = {
+                joy: "😊",
+                sadness: "😔",
+                anger: "😡",
+                fear: "😟",
+                neutral: "😐"
+            };
+
+            return emojis[emotion] || "💬";
+
+        }
+
+        async function sendMessage() {
+
+            const input = document.getElementById("userInput");
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const chat = document.getElementById("chat-messages");
+
+            chat.innerHTML += `
+<div class="bubble user-bubble">
+${text}
+<div class="timestamp">${formatTime()}</div>
 </div>
+`;
 
-<script>
-function formatTime() {
-    const now = new Date();
-    return now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-}
+            chat.scrollTop = chat.scrollHeight;
 
-async function sendMessage() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if (!text) return;
+            input.value = "";
 
-    const chat = document.getElementById("chat-messages");
+            document.getElementById("typing").style.display = "block";
 
-    chat.innerHTML += `
-        <div class="bubble user-bubble">
-            ${text}
-            <div class="timestamp">${formatTime()}</div>
-        </div>
-    `;
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text })
+            });
 
-    chat.scrollTop = chat.scrollHeight;
-    input.value = "";
+            const data = await response.json();
 
-    document.getElementById("typing").style.display = "block";
+            document.getElementById("typing").style.display = "none";
 
-    const response = await fetch("/chat", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message: text})
-    });
+            let bubbleClass = "bubble bot-bubble";
 
-    const data = await response.json();
-    document.getElementById("typing").style.display = "none";
+            if (data.reply.includes("Helpline")) {
+                bubbleClass = "bubble emergency-bubble";
+            }
 
-    chat.innerHTML += `
-        <div class="bubble bot-bubble">
-            ${data.reply}
-            <div class="timestamp">${formatTime()}</div>
-        </div>
-    `;
+            chat.innerHTML += `
+<div class="${bubbleClass}">
+${getEmoji(data.emotion)} ${data.reply}
+<div class="timestamp">${formatTime()}</div>
+</div>
+`;
 
-    chat.scrollTop = chat.scrollHeight;
-}
+            chat.scrollTo({
+                top: chat.scrollHeight,
+                behavior: "smooth"
+            });
 
-document.getElementById("userInput")
-.addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
-});
+        }
 
-const floatingCard = document.getElementById("chat-wrapper");
+        document.getElementById("userInput")
+            .addEventListener("keypress", function (e) {
+                if (e.key === "Enter") sendMessage();
+            });
 
-document.addEventListener("mousemove", e => {
-    const rect = floatingCard.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+        function toggleDark() {
+            document.body.classList.toggle("dark-mode");
+        }
 
-    const dx = (e.clientX - cx) / rect.width;
-    const dy = (e.clientY - cy) / rect.height;
+        const card = document.getElementById("chat-wrapper");
 
-    floatingCard.style.transform =
-        `rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg) translateY(-4px)`;
-});
+        document.addEventListener("mousemove", e => {
 
-document.addEventListener("mouseleave", () => {
-    floatingCard.style.transform = "rotateX(0deg) rotateY(0deg) translateY(0)";
-});
-</script>
+            const rect = card.getBoundingClientRect();
+
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            const dx = (e.clientX - cx) / rect.width;
+            const dy = (e.clientY - cy) / rect.height;
+
+            card.style.transform = `rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg)`;
+
+        });
+
+        document.addEventListener("mouseleave", () => {
+            card.style.transform = "rotateX(0) rotateY(0)";
+        });
+
+    </script>
 
 </body>
+
 </html>
