@@ -11,7 +11,7 @@ st.set_page_config(
     page_title="Wellness Buddy", 
     page_icon="🧠", 
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 st.markdown("""
@@ -120,7 +120,6 @@ def main_app():
         
         if history:
             df = pd.DataFrame(history)
-            # Box removed from here
             st.metric("Current State", df['emotion'].iloc[0].upper())
 
             st.write("---")
