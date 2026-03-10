@@ -7,9 +7,16 @@ DB_NAME = "database/mood_history.db"
 def get_connection():
     return sqlite3.connect(DB_NAME)
 
-def init_db():
+def init_user_table():
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS mood_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,20 +29,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-def init_user_table():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-# New function needed for the login system
 def verify_user(username, password):
     conn = get_connection()
     cursor = conn.cursor()
@@ -60,12 +53,7 @@ def get_mood_history(user_id):
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT message, emotion, timestamp
-        FROM mood_logs
-        WHERE user_id=?
-        ORDER BY timestamp DESC
-    """, (user_id,))
+    cursor.execute("SELECT message, emotion, timestamp FROM mood_logs WHERE user_id=? ORDER BY timestamp DESC", (user_id,))
     data = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return data
