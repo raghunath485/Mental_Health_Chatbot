@@ -35,40 +35,27 @@ st.markdown("""
         border: none;
         color: white;
         font-weight: 600;
-        transition: all 0.3s ease;
     }
     .stChatMessage {
         background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
         border-radius: 15px !important;
     }
-    .sidebar-content {
-        padding: 15px;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
     </style>
     """, unsafe_allow_html=True)
 
 init_user_table()
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_id" not in st.session_state:
-    st.session_state.user_id = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "show_register" not in st.session_state:
-    st.session_state.show_register = False
-if "show_graph" not in st.session_state:
-    st.session_state.show_graph = False
+for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
+    if key not in st.session_state:
+        st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
 
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="auth-card">', unsafe_allow_html=True)
         st.title("🧠 Wellness Buddy")
+        
         if not st.session_state.show_register:
             st.subheader("Sign In")
             with st.form("login_form"):
@@ -77,8 +64,7 @@ def login_page():
                 if st.form_submit_button("Sign In", use_container_width=True):
                     uid = verify_user(user, pw)
                     if uid:
-                        st.session_state.logged_in = True
-                        st.session_state.user_id = uid
+                        st.session_state.logged_in, st.session_state.user_id = True, uid
                         st.rerun()
                     else:
                         st.error("Invalid credentials.")
@@ -90,9 +76,9 @@ def login_page():
             with st.form("signup_form"):
                 new_user = st.text_input("Username")
                 new_pw = st.text_input("Password", type="password")
-                confirm_pw = st.text_input("Confirm Password", type="password")
+                confirm = st.text_input("Confirm Password", type="password")
                 if st.form_submit_button("Register", use_container_width=True):
-                    if new_pw != confirm_pw:
+                    if new_pw != confirm:
                         st.error("Passwords do not match.")
                     else:
                         try:
@@ -102,16 +88,16 @@ def login_page():
                                            (new_user, generate_password_hash(new_pw)))
                             conn.commit()
                             conn.close()
-                            st.success("Success! Please sign in.")
+                            st.success("Account ready! Please sign in.")
                             st.session_state.show_register = False
-                            time.sleep(1)
-                            st.rerun()
+                            time.sleep(1); st.rerun()
                         except:
                             st.error("Username already exists.")
             if st.button("Back to Login", use_container_width=True):
                 st.session_state.show_register = False
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+        st.caption("Developed by Raghunath Panda | Roll: 24155194")
 
 def main_app():
     with st.sidebar:
@@ -121,32 +107,22 @@ def main_app():
         if history:
             df = pd.DataFrame(history)
             st.metric("Current State", df['emotion'].iloc[0].upper())
-
-            st.write("---")
             if st.button("📈 Toggle Mood Graph", use_container_width=True):
                 st.session_state.show_graph = not st.session_state.show_graph
-
             if st.session_state.show_graph:
-                st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
                 st.bar_chart(df['emotion'].value_counts(), color="#8f94fb")
-                st.markdown('</div>', unsafe_allow_html=True)
-            
             with st.expander("Recent History"):
                 for entry in history[:3]:
-                    st.caption(entry['timestamp'])
                     st.write(f"**{entry['emotion'].title()}**: {entry['message'][:40]}...")
         else:
-            st.info("Your mood trends will appear here once you start chatting.")
+            st.info("Start chatting to see trends.")
         
-        st.write("---")
+        st.divider()
         if st.button("Logout", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.messages = []
-            st.session_state.show_graph = False
+            st.session_state.logged_in, st.session_state.messages = False, []
             st.rerun()
 
     st.title("Buddy Chat")
-    
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -156,11 +132,10 @@ def main_app():
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        with st.spinner("Processing..."):
-            emotion, _ = detect_emotion(prompt)
-            save_mood(st.session_state.user_id, prompt, emotion)
-            response = get_bot_response(prompt, emotion)
-            bot_reply = f"#### Emotion: {emotion.title()}\n\n{response}"
+        emotion, _ = detect_emotion(prompt)
+        save_mood(st.session_state.user_id, prompt, emotion)
+        response = get_bot_response(prompt, emotion)
+        bot_reply = f"#### Emotion: {emotion.title()}\n\n{response}"
 
         with st.chat_message("assistant", avatar="🧠"):
             st.markdown(bot_reply)
