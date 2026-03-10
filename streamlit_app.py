@@ -1,171 +1,102 @@
 import streamlit as st
+import pandas as pd
 from chatbot import get_bot_response
 from emotion_detector import detect_emotion
-from mood_database import save_mood, get_mood_history
+from mood_database import save_mood, get_mood_history, init_user_table, verify_user
+from werkzeug.security import generate_password_hash
+import sqlite3
 
-st.set_page_config(
-    page_title="Mental Wellness Buddy",
-    page_icon="🧠",
-    layout="centered"
-)
+# Initial Setup
+st.set_page_config(page_title="Wellness Buddy", page_icon="🧠", layout="centered")
+init_user_table() # Ensure users table exists 
 
-st.markdown("""
-<style>
-
-.stApp {
-background: linear-gradient(135deg,#6e8efb,#a777e3);
-}
-
-.header {
-text-align:center;
-color:white;
-font-size:34px;
-font-weight:bold;
-margin-bottom:5px;
-}
-
-.subtext {
-text-align:center;
-color:white;
-opacity:0.9;
-margin-bottom:30px;
-}
-
-.chat-container {
-background: rgba(255,255,255,0.2);
-backdrop-filter: blur(15px);
-padding:20px;
-border-radius:20px;
-box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-}
-
-.user-bubble {
-background:#5865f2;
-color:white;
-padding:12px 16px;
-border-radius:18px;
-margin:8px 0;
-margin-left:auto;
-width:fit-content;
-max-width:75%;
-font-size:15px;
-}
-
-.bot-bubble {
-background:#eef1ff;
-color:#222;
-padding:12px 16px;
-border-radius:18px;
-margin:8px 0;
-width:fit-content;
-max-width:75%;
-font-size:15px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="header">🧠 Mental Wellness Buddy</div>', unsafe_allow_html=True)
-
-st.markdown(
-'<div class="subtext">Your supportive AI companion. Talk freely — I’m here to listen.</div>',
-unsafe_allow_html=True
-)
-
+# Session State for Authentication
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "user_id" not in st.session_state:
-    st.session_state.user_id = 1
+# --- AUTHENTICATION UI ---
+def login_page():
+    st.title("🧠 Mental Wellness Buddy")
+    tab1, tab2 = st.tabs(["Login", "Create Account"])
+    
+    with tab1:
+        with st.form("login_form"):
+            user = st.text_input("Username")
+            pw = st.text_input("Password", type="password")
+            if st.form_submit_button("Login"):
+                uid = verify_user(user, pw)
+                if uid:
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = uid
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
 
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    with tab2:
+        with st.form("signup_form"):
+            new_user = st.text_input("New Username")
+            new_pw = st.text_input("New Password", type="password")
+            if st.form_submit_button("Sign Up"):
+                try:
+                    conn = sqlite3.connect("database/mood_history.db")
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO users (username, password) VALUES (?,?)", 
+                                   (new_user, generate_password_hash(new_pw)))
+                    conn.commit()
+                    conn.close()
+                    st.success("Account created! Please login.")
+                except:
+                    st.error("Username already exists.")
 
-for msg in st.session_state.messages:
+# --- MAIN APP UI ---
+def main_app():
+    st.title("🧠 Mental Wellness Buddy")
+    
+    # Sidebar for Dashboard and Logout
+    with st.sidebar:
+        st.header("📊 Your Dashboard")
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.session_state.messages = []
+            st.rerun()
+            
+        st.divider()
+        if st.button("Show Mood Trends"):
+            history = get_mood_history(st.session_state.user_id)
+            if history:
+                df = pd.DataFrame(history)
+                st.write("Recent Moods:")
+                st.bar_chart(df['emotion'].value_counts())
+            else:
+                st.info("No data yet.")
 
-    if msg["role"] == "user":
+    # Chat Interface 
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-        st.markdown(
-            f'<div class="user-bubble">{msg["content"]}</div>',
-            unsafe_allow_html=True
-        )
+    if prompt := st.chat_input("How are you feeling?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    else:
-
-        st.markdown(
-            f'<div class="bot-bubble">{msg["content"]}</div>',
-            unsafe_allow_html=True
-        )
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-prompt = st.chat_input("Type how you feel...")
-
-if prompt:
-
-    st.session_state.messages.append({
-        "role": "user",
-        "content": prompt
-    })
-
-    emotion, confidence = detect_emotion(prompt)
-
-    save_mood(st.session_state.user_id, prompt, emotion)
-
-    with st.spinner("Buddy is thinking..."):
+        # AI Processing Logic 
+        emotion, _ = detect_emotion(prompt)
+        save_mood(st.session_state.user_id, prompt, emotion)
         response = get_bot_response(prompt, emotion)
+        
+        full_reply = f"**Detected Emotion: {emotion}**\n\n{response}"
+        
+        with st.chat_message("assistant"):
+            st.markdown(full_reply)
+        st.session_state.messages.append({"role": "assistant", "content": full_reply})
 
-    bot_reply = f"😊 **Emotion detected:** {emotion}\n\n{response}"
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": bot_reply
-    })
-
-    st.rerun()
-
-st.sidebar.title("📊 Mood Dashboard")
-
-if st.sidebar.button("Show Mood History"):
-
-    history = get_mood_history(st.session_state.user_id)
-
-    if history:
-
-        st.sidebar.subheader("Recent moods")
-
-        for row in history[-10:]:
-
-            st.sidebar.write(
-                f"**{row['emotion']}** — {row['message'][:50]}"
-            )
-
-    else:
-
-        st.sidebar.write("No mood history yet.")
-
-if st.sidebar.button("Clear Chat"):
-
-    st.session_state.messages = []
-    st.rerun()
-
-if st.session_state.messages:
-
-    last_message = st.session_state.messages[-1]["content"].lower()
-
-    crisis_words = [
-        "suicide",
-        "kill myself",
-        "end my life"
-    ]
-
-    if any(word in last_message for word in crisis_words):
-
-        st.error("""
-🚨 If you are feeling overwhelmed, please seek help immediately.
-
-India Mental Health Helpline: **9152987821**
-
-Emergency: **112**
-
-You are not alone. Support is available.
-""")
+# Routing Logic
+if not st.session_state.logged_in:
+    login_page()
+else:
+    main_app()
