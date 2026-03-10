@@ -120,9 +120,8 @@ def main_app():
         
         if history:
             df = pd.DataFrame(history)
-            st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
+            # Box removed from here
             st.metric("Current State", df['emotion'].iloc[0].upper())
-            st.markdown('</div>', unsafe_allow_html=True)
 
             st.write("---")
             if st.button("📈 Toggle Mood Graph", use_container_width=True):
@@ -148,6 +147,7 @@ def main_app():
             st.rerun()
 
     st.title("Buddy Chat")
+    
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
