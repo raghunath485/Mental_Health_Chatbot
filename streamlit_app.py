@@ -7,6 +7,7 @@ from emotion_detector import detect_emotion
 from mood_database import save_mood, get_mood_history, init_user_table, verify_user
 from werkzeug.security import generate_password_hash
 
+# --- 1. Page Configuration ---
 st.set_page_config(
     page_title="Wellness Buddy", 
     page_icon="🧠", 
@@ -14,6 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# --- 2. CSS Styling ---
 st.markdown("""
     <style>
     .stApp {
@@ -44,15 +46,18 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- 3. Session State & Database Initialization ---
 init_user_table()
 
 for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
     if key not in st.session_state:
         st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
 
+# --- 4. Login and Registration Logic ---
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
+        # All extra markdown placeholders were removed to fix the empty box issue
         st.markdown('<div class="auth-card">', unsafe_allow_html=True)
         st.title("🧠 Wellness Buddy")
         
@@ -99,6 +104,7 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
         st.caption("Developed by Raghunath Panda | Roll: 24155194")
 
+# --- 5. Main Chat Interface ---
 def main_app():
     with st.sidebar:
         st.markdown("### 📊 Wellness Insights")
@@ -141,6 +147,7 @@ def main_app():
             st.markdown(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
+# --- 6. Router ---
 if not st.session_state.logged_in:
     login_page()
 else:
