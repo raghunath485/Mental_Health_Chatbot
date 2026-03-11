@@ -7,7 +7,6 @@ from emotion_detector import detect_emotion
 from mood_database import save_mood, get_mood_history, init_user_table, verify_user
 from werkzeug.security import generate_password_hash
 
-# --- 1. Page Configuration ---
 st.set_page_config(
     page_title="Wellness Buddy", 
     page_icon="🧠", 
@@ -15,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS Styling ---
 st.markdown("""
     <style>
     .stApp {
@@ -46,21 +44,17 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. Session State & Database Initialization ---
 init_user_table()
 
 for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
     if key not in st.session_state:
         st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
 
-# --- 4. Login and Registration Logic ---
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
-        # All extra markdown placeholders were removed to fix the empty box issue
         st.markdown('<div class="auth-card">', unsafe_allow_html=True)
         st.title("🧠 Wellness Buddy")
-        
         if not st.session_state.show_register:
             st.subheader("Sign In")
             with st.form("login_form"):
@@ -102,14 +96,11 @@ def login_page():
                 st.session_state.show_register = False
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-        st.caption("Developed by Raghunath Panda | Roll: 24155194")
 
-# --- 5. Main Chat Interface ---
 def main_app():
     with st.sidebar:
         st.markdown("### 📊 Wellness Insights")
         history = get_mood_history(st.session_state.user_id)
-        
         if history:
             df = pd.DataFrame(history)
             st.metric("Current State", df['emotion'].iloc[0].upper())
@@ -122,7 +113,6 @@ def main_app():
                     st.write(f"**{entry['emotion'].title()}**: {entry['message'][:40]}...")
         else:
             st.info("Start chatting to see trends.")
-        
         st.divider()
         if st.button("Logout", use_container_width=True):
             st.session_state.logged_in, st.session_state.messages = False, []
@@ -132,22 +122,18 @@ def main_app():
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-
     if prompt := st.chat_input("Tell Buddy what's on your mind..."):
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
-
         emotion, _ = detect_emotion(prompt)
         save_mood(st.session_state.user_id, prompt, emotion)
         response = get_bot_response(prompt, emotion)
         bot_reply = f"#### Emotion: {emotion.title()}\n\n{response}"
-
         with st.chat_message("assistant", avatar="🧠"):
             st.markdown(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-# --- 6. Router ---
 if not st.session_state.logged_in:
     login_page()
 else:
