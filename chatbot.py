@@ -48,9 +48,9 @@ def generate_empathy(emotion):
     return "Thank you for sharing how you feel."
 
 music_recommendations = {
-    "sadness": "🎵 Calm music playlist: https://youtu.be/2OEL4P1Rz04",
+    "sadness": "🎵 Calm music playlist: https://www.youtube.com/watch?v=8WVXk0Gz66E",
     "fear": "🎵 Relaxing ambient sounds: https://youtu.be/lFcSrYw-ARY",
-    "anger": "🎵 Soft instrumental music: https://youtu.be/DWcJFNfaw9c",
+    "anger": "🎵 Soft instrumental music: https://www.youtube.com/watch?v=NM5ll2j4mEk",
     "joy": "🎵 Happy uplifting music: https://youtu.be/ZbZSe6N_BXs"
 }
 

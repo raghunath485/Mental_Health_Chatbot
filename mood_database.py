@@ -3,57 +3,27 @@ import sqlite3
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Consistent path for both local and deployment environments
+# Consistent database path
 DB_NAME = os.path.join("database", "mood_history.db")
 os.makedirs(os.path.dirname(DB_NAME), exist_ok=True)
 
 def get_connection():
     conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row  # Enables column-name access
+    conn.row_factory = sqlite3.Row # Allows column-name access for login
     return conn
 
 def init_user_table():
-    """Initializes all required tables[cite: 39]."""
+    """Initializes all required tables for the project."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mood_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            message TEXT,
-            emotion TEXT,
-            timestamp TEXT
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS chat_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            title TEXT,
-            created_at TEXT
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id INTEGER,
-            role TEXT,
-            content TEXT,
-            timestamp TEXT
-        )
-    """)
+    cursor.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS mood_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, emotion TEXT, timestamp TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS chat_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, created_at TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id INTEGER, role TEXT, content TEXT, timestamp TEXT)")
     conn.commit()
     conn.close()
 
 def create_account(username, password):
-    """Creates a new user with a hashed password[cite: 109]."""
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -69,7 +39,6 @@ def create_account(username, password):
         return False, None, str(e)
 
 def verify_user(username, password):
-    """Verifies credentials by checking the hashed password."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
@@ -80,7 +49,6 @@ def verify_user(username, password):
     return None
 
 def save_mood(user_id, message, emotion):
-    """Logs emotional data for analytics."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO mood_logs (user_id, message, emotion, timestamp) VALUES (?, ?, ?, ?)",
@@ -89,7 +57,6 @@ def save_mood(user_id, message, emotion):
     conn.close()
 
 def get_mood_history(user_id):
-    """Retrieves all mood logs for a specific user."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT message, emotion, timestamp FROM mood_logs WHERE user_id = ? ORDER BY timestamp DESC", (user_id,))
@@ -98,7 +65,6 @@ def get_mood_history(user_id):
     return [dict(row) for row in rows]
 
 def create_new_session(user_id, title):
-    """Starts a new chat conversation thread[cite: 273]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO chat_sessions (user_id, title, created_at) VALUES (?, ?, ?)",
@@ -109,7 +75,6 @@ def create_new_session(user_id, title):
     return session_id
 
 def save_chat_message(session_id, role, content):
-    """Stores individual messages within a session[cite: 277]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
@@ -118,7 +83,6 @@ def save_chat_message(session_id, role, content):
     conn.close()
 
 def get_user_sessions(user_id):
-    """Lists all chat titles for the sidebar[cite: 280]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, title FROM chat_sessions WHERE user_id = ? ORDER BY id DESC", (user_id,))
@@ -127,7 +91,6 @@ def get_user_sessions(user_id):
     return sessions
 
 def get_session_messages(session_id):
-    """Retrieves full conversation for a selected session[cite: 283]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id ASC", (session_id,))

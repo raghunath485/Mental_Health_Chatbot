@@ -19,7 +19,7 @@ st.markdown("""
 
 db.init_user_table()
 
-# Session State Initialization
+# Session State
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "current_session_id" not in st.session_state:
@@ -115,9 +115,9 @@ def main_app():
         with st.chat_message("user", avatar="🙋‍♂️"):
             st.markdown(prompt)
 
-        # Background processing
         emotion, _ = detect_emotion(prompt)
         db.save_mood(st.session_state.user_id, prompt, emotion)
+        
         reply = get_bot_response(prompt, emotion, st.session_state.messages)
 
         db.save_chat_message(st.session_state.current_session_id, "assistant", reply)
