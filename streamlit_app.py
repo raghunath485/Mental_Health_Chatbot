@@ -34,9 +34,39 @@ except Exception:
     authenticator = None
 
 # Global Session State
-if "logged_in" not in st.session_state: st.session_state.logged_in = False
-if "current_session_id" not in st.session_state: st.session_state.current_session_id = None
-if "messages" not in st.session_state: st.session_state.messages = []
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "current_session_id" not in st.session_state:
+    st.session_state.current_session_id = None
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "show_signup" not in st.session_state:
+    st.session_state.show_signup = False
+
+
+def create_account(username: str, password: str):
+    """Create a new user account in the shared SQLite database."""
+    if not username or not password:
+        return False, "Username and password are required."
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        password_hash = generate_password_hash(password)
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, password_hash),
+        )
+        conn.commit()
+        return True, None
+    except sqlite3.IntegrityError:
+        return False, "That username is already taken. Please choose another."
+    except Exception:
+        return False, "Could not create account. Please try again."
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
@@ -63,6 +93,28 @@ def login_page():
                     st.session_state.logged_in, st.session_state.user_id = True, uid
                     st.rerun()
                 else: st.error("Invalid Credentials.")
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.caption("New here?")
+        if st.button("Create New Account", use_container_width=True):
+            st.session_state.show_signup = not st.session_state.show_signup
+
+        if st.session_state.show_signup:
+            st.subheader("Create Account")
+            with st.form("signup_form"):
+                new_u = st.text_input("New Username")
+                new_p = st.text_input("New Password", type="password")
+                new_p2 = st.text_input("Confirm Password", type="password")
+                if st.form_submit_button("Sign Up", use_container_width=True):
+                    if new_p != new_p2:
+                        st.error("Passwords do not match.")
+                    else:
+                        ok, err = create_account(new_u, new_p)
+                        if ok:
+                            st.success("Account created. You can sign in now.")
+                            st.session_state.show_signup = False
+                        else:
+                            st.error(err or "Unable to create account.")
         st.caption("Developed by Raghunath Panda")
         st.markdown('</div>', unsafe_allow_html=True)
 
