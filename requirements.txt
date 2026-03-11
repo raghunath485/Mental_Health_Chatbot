@@ -1,6 +1,8 @@
-streamlit 
-transformers 
-torch 
-textblob 
-werkzeug
+streamlit
 pandas
+sqlite3
+werkzeug
+streamlit-google-auth
+torch
+transformers
+textblob
