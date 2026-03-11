@@ -1,21 +1,21 @@
 import os
 import sqlite3
 from datetime import datetime
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_NAME = "database/mood_history.db"
-
-# Ensure the database directory always exists, regardless of entry point
+# Consistent path for both local and deployment environments
+DB_NAME = os.path.join("database", "mood_history.db")
 os.makedirs(os.path.dirname(DB_NAME), exist_ok=True)
 
-
 def get_connection():
-    return sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row  # Enables column-name access
+    return conn
 
 def init_user_table():
+    """Initializes all required tables[cite: 39]."""
     conn = get_connection()
     cursor = conn.cursor()
-    # User authentication
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +23,6 @@ def init_user_table():
             password TEXT
         )
     """)
-    # Analytics data
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS mood_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +32,6 @@ def init_user_table():
             timestamp TEXT
         )
     """)
-    # Chat grouping
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +40,6 @@ def init_user_table():
             created_at TEXT
         )
     """)
-    # Message storage
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,14 +52,53 @@ def init_user_table():
     conn.commit()
     conn.close()
 
+def create_account(username, password):
+    """Creates a new user with a hashed password[cite: 109]."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        hashed_pw = generate_password_hash(password)
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return True, user_id, None
+    except sqlite3.IntegrityError:
+        return False, None, "Username already exists."
+    except Exception as e:
+        return False, None, str(e)
 
-def init_db():
-    """
-    Backwards-compatible initializer expected by the Flask app.
-    Currently just delegates to init_user_table so all tables exist.
-    """
-    init_user_table()
+def verify_user(username, password):
+    """Verifies credentials by checking the hashed password."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
+    if user and check_password_hash(user["password"], password):
+        return user["id"]
+    return None
+
+def save_mood(user_id, message, emotion):
+    """Logs emotional data for analytics."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO mood_logs (user_id, message, emotion, timestamp) VALUES (?, ?, ?, ?)",
+                   (user_id, message, emotion, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    conn.commit()
+    conn.close()
+
+def get_mood_history(user_id):
+    """Retrieves all mood logs for a specific user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT message, emotion, timestamp FROM mood_logs WHERE user_id = ? ORDER BY timestamp DESC", (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
 def create_new_session(user_id, title):
+    """Starts a new chat conversation thread[cite: 273]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO chat_sessions (user_id, title, created_at) VALUES (?, ?, ?)",
@@ -73,6 +109,7 @@ def create_new_session(user_id, title):
     return session_id
 
 def save_chat_message(session_id, role, content):
+    """Stores individual messages within a session[cite: 277]."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
@@ -81,65 +118,19 @@ def save_chat_message(session_id, role, content):
     conn.close()
 
 def get_user_sessions(user_id):
+    """Lists all chat titles for the sidebar[cite: 280]."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, title FROM chat_sessions WHERE user_id=? ORDER BY id DESC", (user_id,))
+    cursor.execute("SELECT id, title FROM chat_sessions WHERE user_id = ? ORDER BY id DESC", (user_id,))
     sessions = cursor.fetchall()
     conn.close()
     return sessions
 
 def get_session_messages(session_id):
+    """Retrieves full conversation for a selected session[cite: 283]."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT role, content FROM chat_messages WHERE session_id=? ORDER BY id ASC", (session_id,))
-    messages = [{"role": row[0], "content": row[1]} for row in cursor.fetchall()]
+    cursor.execute("SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id ASC", (session_id,))
+    messages = [{"role": row["role"], "content": row["content"]} for row in cursor.fetchall()]
     conn.close()
     return messages
-
-def verify_user(username, password):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, password FROM users WHERE username=?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-    if user and check_password_hash(user[1], password):
-        return user[0]
-    return None
-
-def save_mood(user_id, message, emotion):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO mood_logs (user_id, message, emotion, timestamp) VALUES (?, ?, ?, ?)",
-                   (user_id, message, emotion, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-    conn.commit()
-    conn.close()
-
-def get_mood_history(user_id):
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT message, emotion, timestamp FROM mood_logs WHERE user_id=? ORDER BY timestamp DESC", (user_id,))
-    data = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return data
-
-
-def get_emotion_stats(user_id):
-    """
-    Return a list of (emotion, count) tuples for the given user_id.
-    Used by the /emotion-stats route in the Flask app.
-    """
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT emotion, COUNT(*) as count
-        FROM mood_logs
-        WHERE user_id = ?
-        GROUP BY emotion
-        """,
-        (user_id,),
-    )
-    stats = cursor.fetchall()
-    conn.close()
-    return stats

@@ -1,12 +1,9 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 import time
 from chatbot import get_bot_response
 from emotion_detector import detect_emotion
 import mood_database as db
-from werkzeug.security import generate_password_hash
-from streamlit_google_auth import Authenticate
 
 st.set_page_config(page_title="Wellness Buddy", page_icon="🧠", layout="wide", initial_sidebar_state="collapsed")
 
@@ -22,18 +19,7 @@ st.markdown("""
 
 db.init_user_table()
 
-# Load Google Auth safely
-try:
-    authenticator = Authenticate(
-        secret_names='client_secret.json',
-        cookie_name='wellness_buddy_cookie',
-        key='wellness_buddy_key',
-        cookie_expiry_days=30,
-    )
-except Exception:
-    authenticator = None
-
-# Global Session State
+# Session State Initialization
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "current_session_id" not in st.session_state:
@@ -43,63 +29,28 @@ if "messages" not in st.session_state:
 if "show_signup" not in st.session_state:
     st.session_state.show_signup = False
 
-
-def create_account(username: str, password: str):
-    """Create a new user account in the shared SQLite database."""
-    if not username or not password:
-        return False, "Username and password are required."
-    try:
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        password_hash = generate_password_hash(password)
-        cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password_hash),
-        )
-        conn.commit()
-        return True, None
-    except sqlite3.IntegrityError:
-        return False, "That username is already taken. Please choose another."
-    except Exception:
-        return False, "Could not create account. Please try again."
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="auth-card">', unsafe_allow_html=True)
         st.title("🧠 Wellness Buddy")
         
-        if authenticator:
-            authenticator.check_authenticity()
-            if not st.session_state.get('connected'):
-                authenticator.login()
-                if st.session_state.get('connected'):
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = st.session_state['user_info'].get('email')
-                    st.rerun()
-                st.markdown("<p style='text-align: center;'>OR</p>", unsafe_allow_html=True)
-        
-        with st.form("manual_login"):
-            u = st.text_input("Username")
-            p = st.text_input("Password", type="password")
-            if st.form_submit_button("Sign In", use_container_width=True):
-                uid = db.verify_user(u, p)
-                if uid:
-                    st.session_state.logged_in, st.session_state.user_id = True, uid
-                    st.rerun()
-                else: st.error("Invalid Credentials.")
-
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.caption("New here?")
-        if st.button("Create New Account", use_container_width=True):
-            st.session_state.show_signup = not st.session_state.show_signup
-
-        if st.session_state.show_signup:
+        if not st.session_state.show_signup:
+            st.subheader("Sign In")
+            with st.form("manual_login"):
+                u = st.text_input("Username")
+                p = st.text_input("Password", type="password")
+                if st.form_submit_button("Sign In", use_container_width=True):
+                    uid = db.verify_user(u, p)
+                    if uid:
+                        st.session_state.logged_in, st.session_state.user_id = True, uid
+                        st.rerun()
+                    else: st.error("Invalid Credentials.")
+            
+            if st.button("Create New Account", use_container_width=True):
+                st.session_state.show_signup = True
+                st.rerun()
+        else:
             st.subheader("Create Account")
             with st.form("signup_form"):
                 new_u = st.text_input("New Username")
@@ -109,17 +60,22 @@ def login_page():
                     if new_p != new_p2:
                         st.error("Passwords do not match.")
                     else:
-                        ok, err = create_account(new_u, new_p)
+                        ok, user_id, err = db.create_account(new_u, new_p)
                         if ok:
-                            st.success("Account created. You can sign in now.")
+                            st.session_state.logged_in, st.session_state.user_id = True, user_id
                             st.session_state.show_signup = False
-                        else:
-                            st.error(err or "Unable to create account.")
+                            st.rerun()
+                        else: st.error(err)
+            if st.button("Back to Login", use_container_width=True):
+                st.session_state.show_signup = False
+                st.rerun()
+
         st.caption("Developed by Raghunath Panda")
         st.markdown('</div>', unsafe_allow_html=True)
 
 def main_app():
     with st.sidebar:
+        st.markdown("### 📊 Wellness Insights")
         if st.button("➕ Start New Chat", use_container_width=True):
             st.session_state.messages, st.session_state.current_session_id = [], None
             st.rerun()
@@ -134,12 +90,15 @@ def main_app():
                 st.rerun()
 
         st.divider()
-        st.markdown("### 📊 Mood Trends")
         mood_data = db.get_mood_history(st.session_state.user_id)
         if mood_data:
             df = pd.DataFrame(mood_data)
             st.metric("Latest Emotion", df['emotion'].iloc[0].upper())
             st.bar_chart(df['emotion'].value_counts())
+
+        if st.button("Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.rerun()
 
     st.title("Buddy Chat")
     for msg in st.session_state.messages:
@@ -149,19 +108,16 @@ def main_app():
 
     if prompt := st.chat_input("How are you feeling today?"):
         if st.session_state.current_session_id is None:
-            st.session_state.current_session_id = db.create_new_session(
-                st.session_state.user_id, prompt
-            )
+            st.session_state.current_session_id = db.create_new_session(st.session_state.user_id, prompt)
 
         db.save_chat_message(st.session_state.current_session_id, "user", prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user", avatar="🙋‍♂️"):
             st.markdown(prompt)
 
+        # Background processing
         emotion, _ = detect_emotion(prompt)
         db.save_mood(st.session_state.user_id, prompt, emotion)
-
-        # Passes history list so Buddy can remember previous messages
         reply = get_bot_response(prompt, emotion, st.session_state.messages)
 
         db.save_chat_message(st.session_state.current_session_id, "assistant", reply)
