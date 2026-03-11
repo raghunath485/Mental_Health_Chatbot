@@ -147,6 +147,28 @@ def main_app():
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
+    if prompt := st.chat_input("How are you feeling today?"):
+        if st.session_state.current_session_id is None:
+            st.session_state.current_session_id = db.create_new_session(
+                st.session_state.user_id, prompt
+            )
+
+        db.save_chat_message(st.session_state.current_session_id, "user", prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user", avatar="🙋‍♂️"):
+            st.markdown(prompt)
+
+        emotion, _ = detect_emotion(prompt)
+        db.save_mood(st.session_state.user_id, prompt, emotion)
+
+        # Passes history list so Buddy can remember previous messages
+        reply = get_bot_response(prompt, emotion, st.session_state.messages)
+
+        db.save_chat_message(st.session_state.current_session_id, "assistant", reply)
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        with st.chat_message("assistant", avatar="🧘"):
+            st.markdown(reply)
+
 if not st.session_state.logged_in:
     login_page()
 else:
