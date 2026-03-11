@@ -3,13 +3,13 @@ import sqlite3
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Consistent database path
+# Consistent database path for all entry points
 DB_NAME = os.path.join("database", "mood_history.db")
 os.makedirs(os.path.dirname(DB_NAME), exist_ok=True)
 
 def get_connection():
     conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row # Allows column-name access for login
+    conn.row_factory = sqlite3.Row # Enables accessing columns by name
     return conn
 
 def init_user_table():

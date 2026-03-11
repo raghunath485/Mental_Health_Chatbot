@@ -5,21 +5,44 @@ from chatbot import get_bot_response
 from emotion_detector import detect_emotion
 import mood_database as db
 
-st.set_page_config(page_title="Wellness Buddy", page_icon="🧠", layout="wide", initial_sidebar_state="collapsed")
+# --- 1. Page Configuration ---
+st.set_page_config(
+    page_title="Wellness Buddy", 
+    page_icon="🧠", 
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
 
-# Custom UI Styling
+# --- 2. Custom CSS Styling ---
 st.markdown("""
     <style>
     .stApp { background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #16213e 100%); color: #e9ecef; }
-    .auth-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 50px; }
-    .stButton > button { border-radius: 12px; background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; color: white; font-weight: 600; }
-    .stChatMessage { background: rgba(255, 255, 255, 0.03) !important; border-radius: 15px !important; border: 1px solid rgba(255, 255, 255, 0.05) !important; }
+    .auth-card { 
+        background: rgba(255, 255, 255, 0.05); 
+        backdrop-filter: blur(10px); 
+        border-radius: 20px; 
+        padding: 40px; 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        margin-top: 50px; 
+    }
+    .stButton > button { 
+        border-radius: 12px; 
+        background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); 
+        border: none; 
+        color: white; 
+        font-weight: 600; 
+    }
+    .stChatMessage { 
+        background: rgba(255, 255, 255, 0.03) !important; 
+        border-radius: 15px !important; 
+        border: 1px solid rgba(255, 255, 255, 0.05) !important; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
 db.init_user_table()
 
-# Session State
+# --- 3. Session State Initialization ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "current_session_id" not in st.session_state:
@@ -75,13 +98,37 @@ def login_page():
 
 def main_app():
     with st.sidebar:
-        st.markdown("### 📊 Wellness Insights")
+        st.markdown("### 📊 Emotion History Dashboard")
+        
+        # Dashboard Components
+        mood_data = db.get_mood_history(st.session_state.user_id)
+        if mood_data:
+            df = pd.DataFrame(mood_data)
+            
+            # Summary Metrics
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Latest State", df['emotion'].iloc[0].upper())
+            with col2:
+                dominant_mood = df['emotion'].mode()[0].upper()
+                st.metric("Dominant Mood", dominant_mood)
+            
+            # Detailed History Log
+            with st.expander("🕒 View Detailed History"):
+                for _, row in df.head(10).iterrows():
+                    st.markdown(f"**{row['timestamp']}** | *{row['emotion'].upper()}*\n> {row['message'][:60]}...\n---")
+            
+            # Bar Chart
+            st.bar_chart(df['emotion'].value_counts(), color="#8f94fb")
+        else:
+            st.info("Start chatting to build your dashboard!")
+
+        st.divider()
         if st.button("➕ Start New Chat", use_container_width=True):
             st.session_state.messages, st.session_state.current_session_id = [], None
             st.rerun()
         
-        st.divider()
-        st.markdown("### 📂 Chat History")
+        st.markdown("### 📂 Previous Chats")
         history_list = db.get_user_sessions(st.session_state.user_id)
         for s_id, title in history_list:
             if st.button(f"💬 {title[:20]}...", key=f"session_{s_id}", use_container_width=True):
@@ -90,12 +137,6 @@ def main_app():
                 st.rerun()
 
         st.divider()
-        mood_data = db.get_mood_history(st.session_state.user_id)
-        if mood_data:
-            df = pd.DataFrame(mood_data)
-            st.metric("Latest Emotion", df['emotion'].iloc[0].upper())
-            st.bar_chart(df['emotion'].value_counts())
-
         if st.button("Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
@@ -115,9 +156,11 @@ def main_app():
         with st.chat_message("user", avatar="🙋‍♂️"):
             st.markdown(prompt)
 
+        # Silent emotion tracking
         emotion, _ = detect_emotion(prompt)
         db.save_mood(st.session_state.user_id, prompt, emotion)
         
+        # Natural response generation without technical headers
         reply = get_bot_response(prompt, emotion, st.session_state.messages)
 
         db.save_chat_message(st.session_state.current_session_id, "assistant", reply)
