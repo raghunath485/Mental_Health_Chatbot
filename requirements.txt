@@ -1,7 +1,7 @@
 streamlit
 pandas
 werkzeug
-streamlit-google-auth
 torch
 transformers
 textblob
+plotly
