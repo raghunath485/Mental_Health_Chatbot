@@ -181,7 +181,7 @@ def craft_reply(mood, emotion):
         return random.choice(responses) + "\n\n"
     return "I am here and listening. You can share more if you would like.\n\n"
 
-def get_bot_response(user_input, emotion):
+def get_bot_response(user_input, emotion, history=None):
     text = user_input.lower().strip()
     if detect_emergency(text):
         return (

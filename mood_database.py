@@ -1,8 +1,13 @@
+import os
 import sqlite3
 from datetime import datetime
 from werkzeug.security import check_password_hash
 
 DB_NAME = "database/mood_history.db"
+
+# Ensure the database directory always exists, regardless of entry point
+os.makedirs(os.path.dirname(DB_NAME), exist_ok=True)
+
 
 def get_connection():
     return sqlite3.connect(DB_NAME)
@@ -49,6 +54,14 @@ def init_user_table():
     """)
     conn.commit()
     conn.close()
+
+
+def init_db():
+    """
+    Backwards-compatible initializer expected by the Flask app.
+    Currently just delegates to init_user_table so all tables exist.
+    """
+    init_user_table()
 
 def create_new_session(user_id, title):
     conn = get_connection()
@@ -110,3 +123,24 @@ def get_mood_history(user_id):
     data = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return data
+
+
+def get_emotion_stats(user_id):
+    """
+    Return a list of (emotion, count) tuples for the given user_id.
+    Used by the /emotion-stats route in the Flask app.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT emotion, COUNT(*) as count
+        FROM mood_logs
+        WHERE user_id = ?
+        GROUP BY emotion
+        """,
+        (user_id,),
+    )
+    stats = cursor.fetchall()
+    conn.close()
+    return stats

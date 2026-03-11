@@ -49,11 +49,19 @@
 
         <h2>Create Account</h2>
 
+        {% if error %}
+        <div style="background:#ff4d4d;color:#fff;padding:10px;border-radius:8px;margin-bottom:10px;font-size:14px;">
+            ❌ {{ error }}
+        </div>
+        {% endif %}
+
         <form method="POST" action="/signup">
 
             <input type="text" name="username" placeholder="Username" required>
 
             <input type="password" name="password" placeholder="Password" required>
+
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
 
             <button type="submit">Register</button>
 

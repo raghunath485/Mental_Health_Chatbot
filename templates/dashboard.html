@@ -161,8 +161,8 @@
 
             data.forEach(row => {
 
-                const emotion = row[0];
-                const time = row[1];
+                const emotion = row.emotion;
+                const time = row.timestamp;
 
                 if (!emotions[emotion]) {
                     emotions[emotion] = 0;
@@ -233,7 +233,11 @@
                 const div = document.createElement("div");
                 div.className = "entry";
 
-                div.innerText = `${row[0]} • ${row[1]}`;
+                const message = row.message || "";
+                const emotion = row.emotion || "";
+                const time = row.timestamp || "";
+
+                div.innerText = `${time} • ${emotion.toUpperCase()} • ${message}`;
 
                 container.appendChild(div);
 
