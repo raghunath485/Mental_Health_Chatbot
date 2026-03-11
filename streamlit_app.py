@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import plotly.express as px
 from chatbot import get_bot_response
 from emotion_detector import detect_emotion
 import mood_database as db
@@ -51,6 +52,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "show_signup" not in st.session_state:
     st.session_state.show_signup = False
+if "show_dashboard" not in st.session_state:
+    st.session_state.show_dashboard = False
 
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
@@ -96,33 +99,50 @@ def login_page():
         st.caption("Developed by Raghunath Panda")
         st.markdown('</div>', unsafe_allow_html=True)
 
+def dashboard_view():
+    st.title("📊 Emotion History Dashboard")
+    if st.button("⬅️ Back to Chat"):
+        st.session_state.show_dashboard = False
+        st.rerun()
+    
+    mood_data = db.get_mood_history(st.session_state.user_id)
+    if mood_data:
+        df = pd.DataFrame(mood_data)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("### Proportional Emotion View")
+            fig = px.pie(df, names='emotion', hole=0.5, color_discrete_sequence=px.colors.qualitative.Pastel)
+            st.plotly_chart(fig, use_container_width=True)
+        with col2:
+            st.markdown("### Recent Log Entries")
+            for _, row in df.head(10).iterrows():
+                st.info(f"**{row['timestamp']}** | {row['emotion'].upper()}: {row['message']}")
+    else:
+        st.write("Start chatting to see your emotion history!")
+
 def main_app():
+    if st.session_state.show_dashboard:
+        dashboard_view()
+        return
+
     with st.sidebar:
-        st.markdown("### 📊 Emotion History Dashboard")
-        
-        # Dashboard Components
+        st.markdown("### 📊 Wellness Insights")
+        if st.button("📈 Open Full Dashboard", use_container_width=True):
+            st.session_state.show_dashboard = True
+            st.rerun()
+
+        st.divider()
         mood_data = db.get_mood_history(st.session_state.user_id)
         if mood_data:
             df = pd.DataFrame(mood_data)
+            st.metric("Latest Emotion", df['emotion'].iloc[0].upper())
             
-            # Summary Metrics
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Latest State", df['emotion'].iloc[0].upper())
-            with col2:
-                dominant_mood = df['emotion'].mode()[0].upper()
-                st.metric("Dominant Mood", dominant_mood)
-            
-            # Detailed History Log
-            with st.expander("🕒 View Detailed History"):
-                for _, row in df.head(10).iterrows():
-                    st.markdown(f"**{row['timestamp']}** | *{row['emotion'].upper()}*\n> {row['message'][:60]}...\n---")
-            
-            # Bar Chart
-            st.bar_chart(df['emotion'].value_counts(), color="#8f94fb")
-        else:
-            st.info("Start chatting to build your dashboard!")
-
+            # Donut Chart for sidebar
+            counts = df['emotion'].value_counts()
+            fig = px.pie(values=counts.values, names=counts.index, hole=0.4)
+            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), showlegend=False, paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, use_container_width=True)
+        
         st.divider()
         if st.button("➕ Start New Chat", use_container_width=True):
             st.session_state.messages, st.session_state.current_session_id = [], None
@@ -156,11 +176,8 @@ def main_app():
         with st.chat_message("user", avatar="🙋‍♂️"):
             st.markdown(prompt)
 
-        # Silent emotion tracking
         emotion, _ = detect_emotion(prompt)
         db.save_mood(st.session_state.user_id, prompt, emotion)
-        
-        # Natural response generation without technical headers
         reply = get_bot_response(prompt, emotion, st.session_state.messages)
 
         db.save_chat_message(st.session_state.current_session_id, "assistant", reply)
