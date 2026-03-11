@@ -62,7 +62,6 @@ def init_db():
     Currently just delegates to init_user_table so all tables exist.
     """
     init_user_table()
-
 def create_new_session(user_id, title):
     conn = get_connection()
     cursor = conn.cursor()
