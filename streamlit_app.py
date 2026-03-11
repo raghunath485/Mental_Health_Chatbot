@@ -47,14 +47,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. Session State & Database Initialization ---
+# --- 3. Initialization ---
 init_user_table()
 
 for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
     if key not in st.session_state:
         st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
 
-# --- 4. Login and Registration Logic ---
+# --- 4. Login and Registration ---
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
@@ -137,31 +137,29 @@ def main_app():
 
     st.title("Buddy Chat")
     
-    # Render previous messages with updated avatars
+    # Display message history
     for msg in st.session_state.messages:
         avatar_icon = "🙋‍♂️" if msg["role"] == "user" else "🧘"
         with st.chat_message(msg["role"], avatar=avatar_icon):
             st.markdown(msg["content"])
 
     if prompt := st.chat_input("Tell Buddy what's on your mind..."):
-        # User Message
         with st.chat_message("user", avatar="🙋‍♂️"):
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # Assistant Processing
-        with st.spinner("Processing..."):
+        with st.spinner("Thinking..."):
+            # Background Processing: Detect and Save
             emotion, _ = detect_emotion(prompt)
             save_mood(st.session_state.user_id, prompt, emotion)
-            response = get_bot_response(prompt, emotion)
-            bot_reply = f"#### Emotion: {emotion.title()}\n\n{response}"
+            
+            # Retrieve response WITHOUT the Emotion header
+            bot_reply = get_bot_response(prompt, emotion)
 
-        # Assistant Message
         with st.chat_message("assistant", avatar="🧘"):
             st.markdown(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-# --- 6. Router ---
 if not st.session_state.logged_in:
     login_page()
 else:
