@@ -7,7 +7,6 @@ from emotion_detector import detect_emotion
 from mood_database import save_mood, get_mood_history, init_user_table, verify_user
 from werkzeug.security import generate_password_hash
 
-# --- 1. Page Configuration ---
 st.set_page_config(
     page_title="Wellness Buddy", 
     page_icon="🧠", 
@@ -15,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS Styling ---
 st.markdown("""
     <style>
     .stApp {
@@ -37,6 +35,7 @@ st.markdown("""
         border: none;
         color: white;
         font-weight: 600;
+        transition: all 0.3s ease;
     }
     .stChatMessage {
         background: rgba(255, 255, 255, 0.03) !important;
@@ -46,14 +45,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. Initialization ---
 init_user_table()
 
 for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
     if key not in st.session_state:
         st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
 
-# --- 4. Login and Registration ---
 def login_page():
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
@@ -73,12 +70,13 @@ def login_page():
                     else:
                         st.error("Invalid credentials.")
             
-            # Developer Name added below Sign In button
-            st.caption("Developed by Raghunath Panda")
-            
             if st.button("New user? Create Account", use_container_width=True):
                 st.session_state.show_register = True
                 st.rerun()
+            
+            # Name placed after the new user button
+            st.caption("Developed by Raghunath Panda")
+                
         else:
             st.subheader("Create Account")
             with st.form("signup_form"):
@@ -105,9 +103,11 @@ def login_page():
             if st.button("Back to Login", use_container_width=True):
                 st.session_state.show_register = False
                 st.rerun()
+
+            st.caption("Developed by Raghunath Panda")
+
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 5. Main App ---
 def main_app():
     with st.sidebar:
         st.markdown("### 📊 Wellness Insights")
