@@ -6,6 +6,7 @@ from chatbot import get_bot_response
 from emotion_detector import detect_emotion
 from mood_database import save_mood, get_mood_history, init_user_table, verify_user
 from werkzeug.security import generate_password_hash
+from streamlit_google_auth import Authenticate
 
 # --- 1. Page Configuration ---
 st.set_page_config(
@@ -50,6 +51,13 @@ st.markdown("""
 # --- 3. Initialization ---
 init_user_table()
 
+authenticator = Authenticate(
+    secret_names='client_secret.json',
+    cookie_name='wellness_buddy_cookie',
+    key='wellness_buddy_key',
+    cookie_expiry_days=30,
+)
+
 for key in ["logged_in", "user_id", "messages", "show_register", "show_graph"]:
     if key not in st.session_state:
         st.session_state[key] = False if "show" in key or "logged" in key else (None if "id" in key else [])
@@ -60,6 +68,15 @@ def login_page():
     with col2:
         st.markdown('<div class="auth-card">', unsafe_allow_html=True)
         st.title("🧠 Wellness Buddy")
+        
+        authenticator.check_authenticity()
+        if not st.session_state.get('connected'):
+            authenticator.login()
+            if st.session_state.get('connected'):
+                st.session_state.logged_in = True
+                st.session_state.user_id = st.session_state['user_info'].get('email')
+                st.rerun()
+            st.markdown("<p style='text-align: center;'>OR</p>", unsafe_allow_html=True)
         
         if not st.session_state.show_register:
             st.subheader("Sign In")
@@ -73,13 +90,9 @@ def login_page():
                         st.rerun()
                     else:
                         st.error("Invalid credentials.")
-            
             if st.button("New user? Create Account", use_container_width=True):
                 st.session_state.show_register = True
                 st.rerun()
-            
-            st.caption("Developed by Raghunath Panda")
-                
         else:
             st.subheader("Create Account")
             with st.form("signup_form"):
@@ -102,18 +115,22 @@ def login_page():
                             time.sleep(1); st.rerun()
                         except:
                             st.error("Username already exists.")
-            
             if st.button("Back to Login", use_container_width=True):
                 st.session_state.show_register = False
                 st.rerun()
 
-            st.caption("Developed by Raghunath Panda")
-
+        st.caption("Developed by Raghunath Panda")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 5. Main Chat Interface ---
+# --- 5. Main App ---
 def main_app():
     with st.sidebar:
+        st.markdown("### 🛠️ Actions")
+        if st.button("➕ Start New Chat", use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
+        
+        st.divider()
         st.markdown("### 📊 Wellness Insights")
         history = get_mood_history(st.session_state.user_id)
         
@@ -124,20 +141,18 @@ def main_app():
                 st.session_state.show_graph = not st.session_state.show_graph
             if st.session_state.show_graph:
                 st.bar_chart(df['emotion'].value_counts(), color="#8f94fb")
-            with st.expander("Recent History"):
-                for entry in history[:3]:
-                    st.write(f"**{entry['emotion'].title()}**: {entry['message'][:40]}...")
         else:
             st.info("Start chatting to see trends.")
         
         st.divider()
         if st.button("Logout", use_container_width=True):
+            if st.session_state.get('connected'):
+                authenticator.logout()
             st.session_state.logged_in, st.session_state.messages = False, []
             st.rerun()
 
     st.title("Buddy Chat")
     
-    # Display message history
     for msg in st.session_state.messages:
         avatar_icon = "🙋‍♂️" if msg["role"] == "user" else "🧘"
         with st.chat_message(msg["role"], avatar=avatar_icon):
@@ -149,17 +164,17 @@ def main_app():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.spinner("Thinking..."):
-            # Background Processing: Detect and Save
             emotion, _ = detect_emotion(prompt)
             save_mood(st.session_state.user_id, prompt, emotion)
             
-            # Retrieve response WITHOUT the Emotion header
-            bot_reply = get_bot_response(prompt, emotion)
+            # PASSING HISTORY: Pass st.session_state.messages to keep context
+            bot_reply = get_bot_response(prompt, emotion, st.session_state.messages)
 
         with st.chat_message("assistant", avatar="🧘"):
             st.markdown(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
+# --- 6. Router ---
 if not st.session_state.logged_in:
     login_page()
 else:
