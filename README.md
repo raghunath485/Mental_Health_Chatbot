@@ -2,7 +2,7 @@
 
 An AI-powered mental health assistant that helps users track emotions, receive supportive responses, and practice relaxation techniques.
 
-This project combines **emotion detection, AI chatbot responses, mood tracking, and voice interaction** to create a supportive digital wellness companion.
+This project combines **emotion detection, AI chatbot responses, mood tracking, and persistent chat history** to create a supportive digital wellness companion.
 
 ---
 
@@ -11,7 +11,6 @@ This project combines **emotion detection, AI chatbot responses, mood tracking, 
 Mental health support is often difficult to access immediately. Many people experience stress, anxiety, or emotional challenges but may not always have someone available to talk to.
 
 Mental Wellness Buddy provides:
-
 * Instant emotional support
 * Mood tracking
 * Relaxation guidance
@@ -24,236 +23,90 @@ The goal is to help users **reflect on their emotions and manage stress in a hea
 # 🚀 Features
 
 ### 🤖 AI Chatbot
-
-Responds empathetically based on detected emotions.
+Responds empathetically based on detected emotions and remembers previous context within a session.
 
 ### 😌 Emotion Detection
-
 Detects emotions such as:
-
 * Joy
 * Sadness
 * Anger
 * Fear
 
 ### 🚨 Crisis Detection
-
-Detects emergency phrases like:
-
-* "I want to die"
-* "Life is meaningless"
-
-Provides **mental health helpline information**.
+Detects emergency phrases and provides **mental health helpline information** to ensure user safety.
 
 ### 🧘 Guided Relaxation
-
 Suggests exercises like:
-
 * Breathing exercises
 * Grounding techniques
 * Short relaxation pauses
 
-### 📊 Mood Tracking
+### 📊 Mood Tracking & Analytics
+Stores emotional history in an SQLite database and displays trends via an interactive dashboard.
 
-Stores emotional history in a database.
-
-### 📓 Journaling
-
-Users can write daily thoughts and reflections.
-
-### 🎤 Voice Interaction
-
-Users can speak instead of typing.
+### 📓 Threaded Chat History
+Users can start new sessions or revisit past conversations, maintained through a secure database.
 
 ### 🧠 AI Recommendation Engine
-
 Based on user emotions the system recommends:
-
 * Calm music playlists
 * Motivational quotes
 * Quick relaxation exercises
 
-### 📈 Mood Dashboard
-
-Displays mood history and emotional trends.
-
-### 🔐 User Login System
-
-Supports user authentication and personal mood history.
+### 🔐 Multi-Layer Login System
+Supports secure manual authentication (Password Hashing) and **Google OAuth 2.0** integration.
 
 ---
 
 # 🏗️ Architecture
 
-User → Web Interface → Flask Server → Emotion Detection → Chatbot Engine → Database
+User → Streamlit Interface → Python Backend → Emotion Detection → Chatbot Engine → SQLite Database
 
-Workflow:
-
-1. User sends message
-2. Emotion detection model analyzes text
-3. Chatbot generates response
-4. Mood data stored in database
-5. AI recommendation engine suggests activities
+**Workflow:**
+1. User sends message through the Glassmorphism UI.
+2. Emotion detection model analyzes text for sentiment.
+3. Chatbot generates a contextual, empathetic response.
+4. Mood data and chat messages are stored in the relational database.
+5. Analytics dashboard visualizes emotional trends from history.
 
 ---
 
 # 🛠️ Tech Stack
 
 ### Backend
-
 * Python
-* Flask
-* Flask-Login
+* Streamlit Session State
+* Werkzeug (Security)
 
 ### AI / NLP
-
 * TextBlob
-* Emotion detection model
+* HuggingFace Transformers (Emotion Detection)
 
 ### Frontend
-
-* HTML
-* CSS
-* JavaScript
-* Bootstrap
+* Streamlit (Custom CSS & Glassmorphism)
+* Plotly / Pandas (Analytics)
 
 ### Database
+* SQLite3
 
-* SQLite
-
-### Other Tools
-
-* SpeechRecognition (voice input)
-* Chart.js (dashboard analytics)
+### Authentication
+* Google Cloud Console (OAuth 2.0)
+* Flask-Bcrypt Style Hashing
 
 ---
 
 # 📂 Project Structure
 
-```
+```text
 mental_health_chatbot
 │
-├── app.py
-├── chatbot.py
-├── emotion_detector.py
-├── mood_database.py
+├── streamlit_app.py        # Main App Entry Point
+├── chatbot.py              # Empathetic Response Logic
+├── emotion_detector.py     # NLP Sentiment Analysis
+├── mood_database.py        # SQLite Management & Queries
 │
-├── templates
-│   ├── index.html
-│   ├── dashboard.html
-│   ├── login.html
-│   └── register.html
+├── database/               # Local DB Storage
+├── static/                 # UI Assets & Icons
 │
-├── static
-│   └── coach.png
-│
-├── requirements.txt
-└── README.md
-```
-
----
-
-# 🖥️ Screenshots
-
-### Chat Interface
-
-(Add screenshot here)
-
-### Mood Dashboard
-
-(Add screenshot here)
-
-### Emergency Detection
-
-(Add screenshot here)
-
----
-
-# ⚙️ Installation
-
-Clone repository:
-
-```
-git clone https://github.com/yourusername/mental-wellness-buddy.git
-```
-
-Move into folder:
-
-```
-cd mental-wellness-buddy
-```
-
-Create virtual environment:
-
-```
-python -m venv venv
-```
-
-Activate environment:
-
-```
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```
-pip install -r requirements.txt
-```
-
-Run the server:
-
-```
-python app.py
-```
-
-Open browser:
-
-```
-http://127.0.0.1:5000
-```
-
----
-
-# 🌐 Deployment
-
-The project can be deployed on:
-
-* Render
-* Railway
-* AWS
-* Docker
-
-Example deployment:
-
-```
-https://mental-wellness-buddy.onrender.com
-```
-
----
-
-# 🔮 Future Improvements
-
-* Mobile application
-* Personalized therapy plans
-* AI conversation memory
-* Real-time stress detection
-* Integration with wearable devices
-
----
-
-# 👨‍💻 Author
-
-**Raghunath Panda**
-
-KIIT University
-Artificial Intelligence Project
-
----
-
-# ⭐ If you like this project
-
-Give it a ⭐ on GitHub!
-
-# 🌟 About
-Mental Wellness Buddy is an AI-powered web application that provides emotional support through a chatbot. It detects user emotions using NLP, generates supportive responses, and tracks mood patterns in a dashboard. The platform includes user authentication, mood analytics, and crisis detection to promote emotional awareness and well-being.
+├── requirements.txt        # Project Dependencies
+└── README.md               # Documentation
