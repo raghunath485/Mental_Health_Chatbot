@@ -81,10 +81,10 @@ theme_vars = """
 """
 
 st.markdown(
-    f"""
+    """
     <style>
     :root {
-{theme_vars}
+__THEME_VARS__
     }
 
     .stApp {
@@ -381,7 +381,7 @@ st.markdown(
         }
     }
     </style>
-    """,
+    """.replace("__THEME_VARS__", theme_vars),
     unsafe_allow_html=True,
 )
 
