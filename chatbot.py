@@ -1,210 +1,305 @@
-from textblob import TextBlob
 import random
+from collections import Counter
 
-self_care_tips = [
-    "Maybe take a few slow deep breaths.",
-    "A short walk or stretch might help your body relax.",
-    "Listening to calm music can sometimes ease the mind.",
-    "You could try a quick two-minute mindfulness pause.",
-    "Do not forget to drink some water and take a short rest.",
-    "A few minutes of slow breathing can sometimes calm the mind."
+from textblob import TextBlob
+
+
+SELF_CARE_TIPS = [
+    "Try one minute of slow breathing: inhale for 4 and exhale for 6.",
+    "Drink a glass of water and release some tension in your shoulders.",
+    "Step away from the screen for a short walk or stretch.",
+    "Write down one feeling and one thing you need right now.",
+    "If it feels safe, reach out to one person you trust today.",
 ]
 
-encouragements = [
-    "You are doing better than you think.",
-    "Tough moments do not last forever. You can get through this.",
-    "Small steps still move you forward.",
-    "You are not alone in feeling this way.",
-    "Try to be gentle with yourself today."
+ENCOURAGEMENTS = [
+    "You do not have to solve everything at once.",
+    "Small steps still count as real progress.",
+    "What you are feeling matters.",
+    "You deserve support and care.",
+    "Taking a pause is a healthy choice, not a failure.",
 ]
 
-
-def generate_empathy(emotion):
-    empathy_bank = {
-        "sadness": [
-            "I'm really glad you shared that with me.",
-            "It sounds like things have been difficult lately.",
-            "Thank you for opening up about how you feel."
-        ],
-        "anger": [
-            "It sounds like something frustrating happened.",
-            "I hear the frustration in what you're saying.",
-            "That must have been upsetting."
-        ],
-        "fear": [
-            "It sounds like you're feeling worried.",
-            "Anxiety can feel overwhelming sometimes.",
-            "I hear that you're feeling uneasy."
-        ],
-        "joy": [
-            "That's really nice to hear.",
-            "I'm glad something positive happened.",
-            "It sounds like you're having a good moment."
-        ]
-    }
-    responses = empathy_bank.get(emotion)
-    if responses:
-        return random.choice(responses)
-    return "Thank you for sharing how you feel."
-
-music_recommendations = {
-    "sadness": "🎵 Calm music playlist: https://www.youtube.com/watch?v=8WVXk0Gz66E",
-    "fear": "🎵 Relaxing ambient sounds: https://youtu.be/lFcSrYw-ARY",
-    "anger": "🎵 Soft instrumental music: https://www.youtube.com/watch?v=NM5ll2j4mEk",
-    "joy": "🎵 Happy uplifting music: https://youtu.be/ZbZSe6N_BXs"
+EMPATHY_BANK = {
+    "sadness": [
+        "I am glad you told me this.",
+        "That sounds heavy, and it makes sense that you are feeling low.",
+        "Thank you for sharing something vulnerable.",
+    ],
+    "anger": [
+        "That sounds frustrating.",
+        "I can hear the tension in what you shared.",
+        "It makes sense that this situation would feel upsetting.",
+    ],
+    "fear": [
+        "That sounds really stressful.",
+        "Feeling anxious can make everything feel louder and harder.",
+        "I hear that you are carrying a lot of worry right now.",
+    ],
+    "joy": [
+        "I am happy to hear there is something positive in your day.",
+        "That sounds like a meaningful bright spot.",
+        "It is good to pause and notice a moment like that.",
+    ],
+    "neutral": [
+        "Thank you for checking in.",
+        "I am here with you.",
+        "I am listening.",
+    ],
 }
 
-motivational_quotes = [
-    "💬 Every day may not be good, but there is something good in every day.",
-    "💬 Small progress is still progress.",
-    "💬 You are stronger than you think.",
-    "💬 Difficult moments can help us grow."
+MUSIC_RECOMMENDATIONS = {
+    "sadness": "Music idea: a calm instrumental playlist or soft piano mix.",
+    "fear": "Sound idea: ambient rain, nature sounds, or a grounding playlist.",
+    "anger": "Music idea: low-tempo instrumental music to help your body settle.",
+    "joy": "Music idea: keep the momentum with an uplifting playlist.",
+    "neutral": "Music idea: choose something steady and gentle for a reset.",
+}
+
+QUICK_EXERCISES = [
+    "Exercise: unclench your jaw, drop your shoulders, and take 5 slow breaths.",
+    "Exercise: try the 5-4-3-2-1 grounding method to reconnect with the present.",
+    "Exercise: stand up and stretch your neck, chest, and hands for 60 seconds.",
 ]
 
-quick_exercises = [
-    "🧘 Try a 2-minute breathing exercise.",
-    "🧘 Stretch your shoulders and neck for 30 seconds.",
-    "🧘 Take a short walk and focus on your breathing."
+MOTIVATIONAL_QUOTES = [
+    "Reflection: progress can be quiet and still be real.",
+    "Reflection: rest is part of recovery, not the opposite of it.",
+    "Reflection: you are allowed to ask for help before things get worse.",
+    "Reflection: one difficult day does not define your whole story.",
 ]
 
-def generate_recommendations(emotion):
-    music = music_recommendations.get(
-        emotion,
-        "🎵 Listening to calm music might help you relax."
-    )
-    quote = random.choice(motivational_quotes)
-    exercise = random.choice(quick_exercises)
-    return f"""
-Suggested for you:
+CRISIS_CONTACTS = [
+    "If you might act on these thoughts now, call emergency services right away.",
+    "United States and Canada: call or text 988.",
+    "India: Tele-MANAS 14416 or 1-800-891-4416, AASRA +91-22-2754-6669.",
+    "If you are elsewhere, contact your local emergency number or nearest crisis hotline now.",
+]
 
-{music}
+HIGH_RISK_KEYWORDS = [
+    "kill myself",
+    "suicide",
+    "end my life",
+    "want to die",
+    "wish i was dead",
+    "better off dead",
+    "no reason to live",
+    "i do not want to live anymore",
+    "i dont want to live anymore",
+    "i can't go on",
+    "i cant go on",
+]
 
-{exercise}
+MODERATE_RISK_KEYWORDS = [
+    "self harm",
+    "hurt myself",
+    "harm myself",
+    "cut myself",
+    "overdose",
+    "i want to disappear",
+    "life is meaningless",
+    "nothing matters",
+]
 
-{quote}
-"""
 
-def guided_relaxation():
-    exercises = [
-        "Try this breathing exercise:\n\nInhale for 4 seconds\nHold for 4 seconds\nExhale for 6 seconds\nRepeat 5 times.",
-        "Try a grounding exercise:\n\nName 5 things you can see\n4 things you can touch\n3 things you can hear\n2 things you can smell\n1 thing you can taste.",
-        "Take a short relaxation pause:\n\nClose your eyes for 10 seconds.\nRelax your shoulders.\nTake slow deep breaths."
-    ]
-    return random.choice(exercises)
+def normalize_text(text):
+    return " ".join((text or "").lower().strip().split())
 
-def detect_emergency(text):
-    emergency_keywords = [
-        "i want to die",
-        "kill myself",
-        "suicide",
-        "end my life",
-        "better off dead",
-        "i wish i was dead",
-        "life is meaningless",
-        "no reason to live",
-        "i can't go on",
-        "i don't want to live anymore"
-    ]
-    text = text.lower()
-    return any(keyword in text for keyword in emergency_keywords)
+
+def detect_risk_level(text):
+    normalized = normalize_text(text)
+    if any(keyword in normalized for keyword in HIGH_RISK_KEYWORDS):
+        return "high"
+    if any(keyword in normalized for keyword in MODERATE_RISK_KEYWORDS):
+        return "moderate"
+    return "low"
+
 
 def detect_mood(user_text):
-    text_lower = user_text.lower()
+    text_lower = normalize_text(user_text)
     negative_keywords = [
-        "stress","sad","lonely","anxious","panic","depressed",
-        "upset","hurt","crying","worried","overthinking",
-        "tired","exhausted","burned out","overwhelmed",
-        "hopeless","helpless","worthless","frustrated","angry"
+        "stress",
+        "sad",
+        "lonely",
+        "anxious",
+        "panic",
+        "depressed",
+        "upset",
+        "hurt",
+        "crying",
+        "worried",
+        "overthinking",
+        "tired",
+        "exhausted",
+        "burned out",
+        "overwhelmed",
+        "hopeless",
+        "helpless",
+        "worthless",
+        "frustrated",
+        "angry",
     ]
     mild_negative_keywords = [
-        "a bit stressed","slightly sad","a bit worried",
-        "feeling low","rough day","bad day"
+        "a bit stressed",
+        "slightly sad",
+        "a bit worried",
+        "feeling low",
+        "rough day",
+        "bad day",
     ]
     if any(word in text_lower for word in negative_keywords):
         return "negative"
     if any(word in text_lower for word in mild_negative_keywords):
         return "mild_negative"
-    analysis = TextBlob(user_text)
-    score = analysis.sentiment.polarity
+
+    score = TextBlob(user_text).sentiment.polarity
     if score > 0.25:
         return "positive"
-    elif score < -0.3:
+    if score < -0.3:
         return "negative"
-    elif score < -0.1:
+    if score < -0.1:
         return "mild_negative"
-    else:
-        return "neutral"
+    return "neutral"
 
-def craft_reply(mood, emotion):
-    tip = random.choice(self_care_tips)
-    boost = random.choice(encouragements)
-    if emotion == "sadness":
-        return (
-            "I can sense some sadness in what you shared.\n\n"
-            f"Suggestion: {tip}\n"
-            f"Reminder: {boost}\n\n"
-        )
-    if emotion == "anger":
-        return (
-            "It sounds like you might be feeling frustrated.\n"
-            "Taking a few deep breaths or stepping away for a moment could help.\n\n"
-        )
-    if emotion == "fear":
-        return (
-            "It seems like you may be feeling anxious.\n\n"
-            + guided_relaxation() + "\n\n"
-        )
-    if emotion == "joy":
-        responses = [
-            "That is wonderful to hear.",
-            "I am glad you are feeling good.",
-            "It sounds like you're having a positive moment."
-        ]
-        return random.choice(responses) + "\n\n"
-    if mood == "mild_negative":
-        return (
-            "It sounds like things are a bit difficult right now.\n\n"
-            f"Suggestion: {tip}\n\n"
-        )
-    if mood == "negative":
-        return (
-            "I am sorry that you are feeling low right now.\n\n"
-            + guided_relaxation() +
-            f"\n\nReminder: {boost}\n\n"
-        )
+
+def generate_empathy(emotion):
+    responses = EMPATHY_BANK.get(emotion, EMPATHY_BANK["neutral"])
+    return random.choice(responses)
+
+
+def guided_relaxation():
+    exercises = [
+        "Try this breathing pattern: inhale for 4 seconds, hold for 4, exhale for 6. Repeat 5 times.",
+        "Try grounding: name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.",
+        "Pause for 30 seconds: relax your shoulders, unclench your jaw, and slow your breathing.",
+    ]
+    return random.choice(exercises)
+
+
+def generate_recommendations(emotion):
+    music = MUSIC_RECOMMENDATIONS.get(emotion, MUSIC_RECOMMENDATIONS["neutral"])
+    quote = random.choice(MOTIVATIONAL_QUOTES)
+    exercise = random.choice(QUICK_EXERCISES)
+    return f"{music}\n{exercise}\n{quote}"
+
+
+def build_history_summary(history):
+    if not history:
+        return ""
+
+    user_messages = [msg["content"] for msg in history if msg.get("role") == "user"][-3:]
+    if len(user_messages) < 2:
+        return ""
+
+    combined = " ".join(user_messages)
+    mood = detect_mood(combined)
+    if mood in {"negative", "mild_negative"}:
+        return "I also notice this has been weighing on you across more than one message."
     if mood == "positive":
-        responses = [
-            "That sounds like a positive moment.",
-            "I am glad things are going well.",
-            "That is nice to hear."
-        ]
-        return random.choice(responses) + "\n\n"
-    return "I am here and listening. You can share more if you would like.\n\n"
+        return "There is also a positive thread in what you have been sharing lately."
+    return ""
+
+
+def craft_reply(mood, emotion, history=None):
+    tip = random.choice(SELF_CARE_TIPS)
+    boost = random.choice(ENCOURAGEMENTS)
+    history_note = build_history_summary(history)
+
+    if emotion == "sadness":
+        body = (
+            f"Support step: {tip}\n"
+            f"Reminder: {boost}\n"
+            f"Reset idea: {guided_relaxation()}"
+        )
+    elif emotion == "anger":
+        body = (
+            "Support step: create a little space before reacting if you can.\n"
+            f"Body reset: {guided_relaxation()}\n"
+            f"Reminder: {boost}"
+        )
+    elif emotion == "fear":
+        body = (
+            f"Grounding idea: {guided_relaxation()}\n"
+            f"Support step: {tip}\n"
+            f"Reminder: {boost}"
+        )
+    elif emotion == "joy":
+        body = (
+            "It can help to name what is going well so you can come back to it later.\n"
+            "Try writing down one thing that supported this better moment."
+        )
+    elif mood == "mild_negative":
+        body = f"Support step: {tip}\nReminder: {boost}"
+    elif mood == "negative":
+        body = (
+            f"Grounding idea: {guided_relaxation()}\n"
+            f"Support step: {tip}\n"
+            f"Reminder: {boost}"
+        )
+    elif mood == "positive":
+        body = "That sounds like an important bright spot. Holding onto small wins can really help."
+    else:
+        body = "You can share as much or as little as you want, and we can take it one step at a time."
+
+    if history_note:
+        body = f"{history_note}\n{body}"
+
+    return body
+
+
+def build_check_in_prompt():
+    prompts = [
+        "If you want, tell me what happened today that seems to be affecting you most.",
+        "If it helps, describe what your body feels like right now: tense, tired, restless, heavy, or calm.",
+        "If you are unsure where to start, you can name one emotion and one need.",
+    ]
+    return random.choice(prompts)
+
+
+def build_crisis_response(risk_level):
+    intro = (
+        "I am really glad you said this out loud. Your safety matters more than continuing this chat."
+        if risk_level == "high"
+        else "What you shared sounds serious, and I want to respond carefully."
+    )
+    contacts = "\n".join(f"- {line}" for line in CRISIS_CONTACTS)
+    return (
+        f"{intro}\n\n"
+        "Please contact immediate human support right now:\n"
+        f"{contacts}\n\n"
+        "If you can, move closer to another person and tell them you need support now."
+    )
+
+
+def generate_wellness_snapshot(history):
+    emotions = [item.get("emotion") for item in history if item.get("emotion")]
+    if not emotions:
+        return "Not enough check-ins yet to spot a pattern."
+
+    top_emotion, count = Counter(emotions).most_common(1)[0]
+    total = len(emotions)
+    return f"Recent trend: {top_emotion} appeared in {count} of your last {total} logged check-ins."
+
 
 def get_bot_response(user_input, emotion, history=None):
-    text = user_input.lower().strip()
-    if detect_emergency(text):
-        return (
-            "It seems you may be going through something very difficult.\n\n"
-            "You do not have to face this alone.\n"
-            "Please consider reaching out to someone you trust or a professional.\n\n"
-            "India Mental Health Helplines:\n"
-            "Kiran: 9152987821\n"
-            "AASRA: +91-22-27546669"
-        )
+    text = normalize_text(user_input)
+    risk_level = detect_risk_level(text)
+    if risk_level in {"high", "moderate"}:
+        return build_crisis_response(risk_level)
+
     if len(text.split()) <= 2:
-        return (
-            "It sounds like you want to talk about how you are feeling.\n"
-            "Would you like to share a little more about it?"
-        )
+        return f"I am here with you.\n\n{build_check_in_prompt()}"
+
     if text.startswith("today") or text.startswith("i feel today"):
         return (
-            "Thank you for sharing that.\n"
-            "Writing about your thoughts can sometimes help.\n"
-            "Would you like to tell me more about your day?"
+            "Thank you for checking in.\n\n"
+            "Writing about your day can make the feeling easier to understand.\n"
+            f"{build_check_in_prompt()}"
         )
+
     mood = detect_mood(user_input)
     empathy = generate_empathy(emotion)
-    base_reply = craft_reply(mood, emotion)
+    base_reply = craft_reply(mood, emotion, history=history)
     recommendations = generate_recommendations(emotion)
-    return f"{empathy}\n\n{base_reply}{recommendations}"
+    return f"{empathy}\n\n{base_reply}\n\nSuggested next steps:\n{recommendations}"
+

@@ -1,36 +1,50 @@
-from transformers import pipeline
+from functools import lru_cache
+
 import streamlit as st
+from transformers import pipeline
 
 
-@st.cache_resource
+EMOTION_KEYWORDS = {
+    "joy": ["happy", "relieved", "grateful", "excited", "hopeful", "good"],
+    "sadness": ["sad", "empty", "lonely", "hurt", "crying", "down"],
+    "anger": ["angry", "furious", "annoyed", "mad", "frustrated"],
+    "fear": ["anxious", "afraid", "worried", "panic", "scared", "nervous"],
+}
+
+
+@st.cache_resource(show_spinner=False)
 def load_emotion_model():
-    """
-    Load the emotion detection model once and cache it.
-    This prevents the model from reloading on every Streamlit rerun.
-    """
-    emotion_pipeline = pipeline(
-        "text-classification",
-        model="j-hartmann/emotion-english-distilroberta-base"
-    )
-    return emotion_pipeline
+    try:
+        return pipeline(
+            "text-classification",
+            model="j-hartmann/emotion-english-distilroberta-base",
+        )
+    except Exception:
+        return None
 
 
-# Load the cached model
 emotion_pipeline = load_emotion_model()
 
 
-def detect_emotion(text):
-    """
-    Detect emotion from user input text.
-    Returns emotion label and confidence score.
-    """
+def heuristic_emotion(text):
+    normalized = (text or "").lower()
+    for emotion, keywords in EMOTION_KEYWORDS.items():
+        if any(keyword in normalized for keyword in keywords):
+            return emotion, 0.55
+    return "neutral", 0.4
 
+
+def detect_emotion(text):
     if not text or text.strip() == "":
         return "neutral", 0.0
 
-    result = emotion_pipeline(text)
+    if emotion_pipeline is None:
+        return heuristic_emotion(text)
 
-    emotion = result[0]["label"]
-    score = result[0]["score"]
-
-    return emotion, score
+    try:
+        result = emotion_pipeline(text)
+        emotion = result[0]["label"]
+        score = float(result[0]["score"])
+        return emotion, score
+    except Exception:
+        return heuristic_emotion(text)
