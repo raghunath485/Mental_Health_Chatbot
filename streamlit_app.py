@@ -186,10 +186,11 @@ __THEME_VARS__
     }
 
     .hero-chip {
-        background: rgba(248, 255, 253, 0.72);
-        border: 1px solid rgba(16, 87, 86, 0.08);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(16, 87, 86, 0.1);
         border-radius: 18px;
         padding: 0.85rem 0.9rem;
+        box-shadow: 0 8px 20px rgba(25, 76, 77, 0.05);
     }
 
     .hero-chip-label {
@@ -203,7 +204,8 @@ __THEME_VARS__
     .hero-chip-value {
         font-size: 1rem;
         font-weight: 600;
-        color: var(--text-main);
+        color: #1d4a49;
+        line-height: 1.5;
     }
 
     .support-note {
