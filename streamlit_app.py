@@ -43,29 +43,29 @@ st.markdown(
     """
     <style>
     :root {
-        --bg-1: #041018;
-        --bg-2: #0a1f2a;
-        --bg-3: #102d33;
-        --glass: rgba(8, 22, 32, 0.68);
-        --glass-strong: rgba(10, 25, 36, 0.82);
-        --line: rgba(173, 244, 255, 0.14);
-        --line-strong: rgba(173, 244, 255, 0.22);
-        --text-main: #effbfd;
-        --text-soft: #9fc7cf;
-        --mint: #73f0c1;
-        --aqua: #6ccdf7;
-        --gold: #ffd37d;
-        --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        --bg-1: #f5fbfc;
+        --bg-2: #edf8f6;
+        --bg-3: #f8f4ec;
+        --surface: rgba(255, 255, 255, 0.82);
+        --surface-strong: rgba(255, 255, 255, 0.94);
+        --line: rgba(16, 87, 86, 0.1);
+        --line-strong: rgba(16, 87, 86, 0.16);
+        --text-main: #153536;
+        --text-soft: #55797a;
+        --mint: #2f9d8f;
+        --aqua: #3478b7;
+        --gold: #b98534;
+        --shadow: 0 20px 50px rgba(31, 74, 83, 0.1);
     }
 
     .stApp {
         background:
-            radial-gradient(circle at 15% 20%, rgba(115, 240, 193, 0.14), transparent 24%),
-            radial-gradient(circle at 85% 12%, rgba(108, 205, 247, 0.16), transparent 20%),
-            radial-gradient(circle at 50% 75%, rgba(255, 211, 125, 0.08), transparent 22%),
+            radial-gradient(circle at 12% 18%, rgba(73, 191, 164, 0.12), transparent 22%),
+            radial-gradient(circle at 88% 14%, rgba(90, 166, 219, 0.12), transparent 20%),
+            radial-gradient(circle at 52% 78%, rgba(223, 188, 131, 0.12), transparent 24%),
             linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
         color: var(--text-main);
-        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        font-family: "Aptos", "Segoe UI", sans-serif;
     }
 
     .stApp::before {
@@ -73,12 +73,9 @@ st.markdown(
         position: fixed;
         inset: 0;
         pointer-events: none;
-        background-image:
-            linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-        background-size: 48px 48px;
-        mask-image: radial-gradient(circle at center, black 48%, transparent 95%);
-        opacity: 0.4;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 30%);
+        opacity: 0.7;
     }
 
     .block-container {
@@ -88,65 +85,68 @@ st.markdown(
     }
 
     .panel {
-        background: linear-gradient(180deg, rgba(12, 29, 42, 0.82), rgba(8, 19, 29, 0.72));
+        background: linear-gradient(180deg, var(--surface-strong), var(--surface));
         border: 1px solid var(--line);
-        border-radius: 24px;
+        border-radius: 22px;
         padding: 1.15rem 1.2rem;
         box-shadow: var(--shadow);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(14px);
     }
 
     .hero {
         position: relative;
         overflow: hidden;
         background:
-            radial-gradient(circle at top right, rgba(108, 205, 247, 0.18), transparent 30%),
-            linear-gradient(135deg, rgba(14, 40, 49, 0.94), rgba(10, 27, 37, 0.84));
+            radial-gradient(circle at top right, rgba(83, 187, 180, 0.18), transparent 30%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(242, 250, 248, 0.9));
         border: 1px solid var(--line-strong);
-        border-radius: 30px;
-        padding: 1.55rem;
+        border-radius: 28px;
+        padding: 1.7rem;
         margin-bottom: 1rem;
-        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+        box-shadow: var(--shadow);
     }
 
     .hero::after {
         content: "";
         position: absolute;
-        width: 280px;
-        height: 280px;
-        right: -80px;
-        top: -90px;
+        width: 240px;
+        height: 240px;
+        right: -70px;
+        top: -80px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(115, 240, 193, 0.14), transparent 65%);
+        background: radial-gradient(circle, rgba(73, 191, 164, 0.15), transparent 68%);
         filter: blur(2px);
     }
 
     .eyebrow {
         display: inline-block;
         text-transform: uppercase;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.15em;
         font-size: 0.72rem;
         color: var(--mint);
         margin-bottom: 0.55rem;
         padding: 0.42rem 0.65rem;
-        border: 1px solid rgba(115, 240, 193, 0.22);
+        border: 1px solid rgba(47, 157, 143, 0.18);
         border-radius: 999px;
-        background: rgba(115, 240, 193, 0.08);
+        background: rgba(47, 157, 143, 0.08);
     }
 
     .title {
-        font-size: 2.45rem;
-        line-height: 1.06;
+        font-family: "Georgia", "Times New Roman", serif;
+        font-size: 2.7rem;
+        line-height: 1.03;
         font-weight: 700;
-        margin-bottom: 0.55rem;
-        max-width: 780px;
+        margin-bottom: 0.7rem;
+        max-width: 700px;
+        color: #183938;
     }
 
     .hero-copy {
-        max-width: 760px;
-        color: #cbe6ed;
-        line-height: 1.65;
+        max-width: 720px;
+        color: #4b6f70;
+        line-height: 1.7;
         margin-bottom: 1rem;
+        font-size: 1rem;
     }
 
     .hero-grid {
@@ -157,8 +157,8 @@ st.markdown(
     }
 
     .hero-chip {
-        background: rgba(255, 255, 255, 0.045);
-        border: 1px solid rgba(173, 244, 255, 0.1);
+        background: rgba(248, 255, 253, 0.72);
+        border: 1px solid rgba(16, 87, 86, 0.08);
         border-radius: 18px;
         padding: 0.85rem 0.9rem;
     }
@@ -178,14 +178,14 @@ st.markdown(
     }
 
     .support-note {
-        background: linear-gradient(90deg, rgba(255, 211, 125, 0.12), rgba(255, 211, 125, 0.04));
-        border: 1px solid rgba(255, 211, 125, 0.2);
+        background: linear-gradient(90deg, rgba(255, 239, 208, 0.9), rgba(255, 248, 231, 0.75));
+        border: 1px solid rgba(185, 133, 52, 0.18);
         border-left: 4px solid var(--gold);
         border-radius: 16px;
         padding: 0.9rem 1rem;
         margin-bottom: 1rem;
-        color: #fff3ce;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+        color: #6f531b;
+        box-shadow: 0 10px 24px rgba(102, 87, 49, 0.08);
     }
 
     .section-kicker {
@@ -197,12 +197,12 @@ st.markdown(
     }
 
     .metric-tile {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.03));
-        border: 1px solid rgba(173, 244, 255, 0.11);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(249, 253, 252, 0.88));
+        border: 1px solid rgba(16, 87, 86, 0.08);
         border-radius: 22px;
         padding: 1rem;
         min-height: 118px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        box-shadow: 0 10px 25px rgba(25, 76, 77, 0.06);
     }
 
     .metric-label {
@@ -227,11 +227,12 @@ st.markdown(
     }
 
     .reflection-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
-        border: 1px solid rgba(173, 244, 255, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 253, 252, 0.9));
+        border: 1px solid rgba(16, 87, 86, 0.08);
         border-radius: 20px;
         padding: 1rem;
         margin-bottom: 0.8rem;
+        box-shadow: 0 8px 22px rgba(25, 76, 77, 0.05);
     }
 
     .reflection-meta {
@@ -243,12 +244,12 @@ st.markdown(
     }
 
     .chat-shell {
-        background: linear-gradient(180deg, rgba(9, 23, 34, 0.86), rgba(7, 18, 27, 0.78));
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 252, 251, 0.9));
         border: 1px solid var(--line);
         border-radius: 28px;
         padding: 1.1rem;
         box-shadow: var(--shadow);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(16px);
     }
 
     .chat-shell-header {
@@ -258,7 +259,7 @@ st.markdown(
         gap: 1rem;
         margin-bottom: 0.95rem;
         padding-bottom: 0.95rem;
-        border-bottom: 1px solid rgba(173, 244, 255, 0.09);
+        border-bottom: 1px solid rgba(16, 87, 86, 0.08);
     }
 
     .chat-shell-title {
@@ -276,8 +277,8 @@ st.markdown(
         white-space: nowrap;
         padding: 0.5rem 0.8rem;
         border-radius: 999px;
-        border: 1px solid rgba(115, 240, 193, 0.2);
-        background: rgba(115, 240, 193, 0.08);
+        border: 1px solid rgba(47, 157, 143, 0.16);
+        background: rgba(47, 157, 143, 0.08);
         color: var(--mint);
         font-size: 0.8rem;
         letter-spacing: 0.08em;
@@ -285,26 +286,26 @@ st.markdown(
     }
 
     .sidebar-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
-        border: 1px solid rgba(173, 244, 255, 0.09);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 253, 252, 0.82));
+        border: 1px solid rgba(16, 87, 86, 0.08);
         border-radius: 18px;
         padding: 0.9rem;
         margin-bottom: 0.85rem;
     }
 
     .stSidebar > div:first-child {
-        background: linear-gradient(180deg, rgba(5, 16, 23, 0.97), rgba(8, 22, 32, 0.95));
-        border-right: 1px solid rgba(173, 244, 255, 0.08);
+        background: linear-gradient(180deg, rgba(248, 252, 251, 0.98), rgba(241, 249, 247, 0.96));
+        border-right: 1px solid rgba(16, 87, 86, 0.07);
     }
 
     .stButton > button {
         width: 100%;
         border-radius: 14px;
-        border: 1px solid rgba(173, 244, 255, 0.13);
-        background: linear-gradient(135deg, rgba(25, 94, 87, 0.95), rgba(27, 116, 145, 0.95));
+        border: 1px solid rgba(47, 157, 143, 0.12);
+        background: linear-gradient(135deg, #2f9d8f, #4a8bc2);
         color: white;
         font-weight: 600;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 10px 24px rgba(46, 112, 114, 0.14);
         transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     }
 
@@ -315,23 +316,31 @@ st.markdown(
     }
 
     .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(173, 244, 255, 0.12);
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(16, 87, 86, 0.12);
         border-radius: 14px;
         color: var(--text-main);
     }
 
     .stChatInputContainer > div {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(173, 244, 255, 0.12);
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(16, 87, 86, 0.12);
         border-radius: 18px;
     }
 
     .stChatMessage {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(173, 244, 255, 0.08);
+        background: rgba(255, 255, 255, 0.86) !important;
+        border: 1px solid rgba(16, 87, 86, 0.09);
         border-radius: 22px !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        box-shadow: 0 8px 18px rgba(25, 76, 77, 0.05);
+    }
+
+    [data-testid="stChatMessageAvatar"] {
+        display: none;
+    }
+
+    [data-testid="stChatMessageContent"] {
+        margin-left: 0 !important;
     }
 
     .stCaption {
@@ -340,7 +349,7 @@ st.markdown(
 
     @media (max-width: 900px) {
         .title {
-            font-size: 2rem;
+            font-size: 2.15rem;
         }
         .hero-grid {
             grid-template-columns: 1fr;
@@ -403,16 +412,16 @@ def render_header():
         """
         <div class='hero'>
             <div class='eyebrow'>Mental Wellness Companion</div>
-            <div class='title'>A futuristic check-in space that still feels calm, warm, and human.</div>
-            <div class='hero-copy'>Mental Wellness Buddy blends reflective support with a more advanced visual language so it feels like a modern care console, not a generic chatbot. The goal is still the same: help users pause, notice patterns, and feel safe enough to keep talking.</div>
+            <div class='title'>A calm digital space for reflection, support, and emotional clarity.</div>
+            <div class='hero-copy'>Mental Wellness Buddy is designed to feel modern without becoming cold. It gives users a gentle place to check in, notice patterns, and keep conversations going over time.</div>
             <div class='hero-grid'>
                 <div class='hero-chip'>
                     <div class='hero-chip-label'>Tone</div>
                     <div class='hero-chip-value'>Gentle, steady, non-judgmental</div>
                 </div>
                 <div class='hero-chip'>
-                    <div class='hero-chip-label'>Experience</div>
-                    <div class='hero-chip-value'>Glassmorphism with soft neon calm</div>
+                    <div class='hero-chip-label'>Look</div>
+                    <div class='hero-chip-value'>Soft glass, light gradients, subtle depth</div>
                 </div>
                 <div class='hero-chip'>
                     <div class='hero-chip-label'>Purpose</div>
