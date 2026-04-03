@@ -297,6 +297,7 @@ __THEME_VARS__
         font-size: 1.25rem;
         font-weight: 700;
         margin-bottom: 0.2rem;
+        color: var(--text-main);
     }
 
     .chat-shell-copy {
@@ -368,6 +369,23 @@ __THEME_VARS__
 
     .stCaption {
         color: var(--text-soft) !important;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    .stMarkdown,
+    .stText,
+    .stSubheader,
+    .stHeader {
+        color: var(--text-main);
+    }
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: var(--text-main) !important;
     }
 
     @media (max-width: 900px) {
