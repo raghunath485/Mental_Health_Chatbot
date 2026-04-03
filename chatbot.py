@@ -1,7 +1,10 @@
 import random
 from collections import Counter
 
-from textblob import TextBlob
+try:
+    from textblob import TextBlob
+except Exception:
+    TextBlob = None
 
 
 SELF_CARE_TIPS = [
@@ -101,6 +104,49 @@ MODERATE_RISK_KEYWORDS = [
     "nothing matters",
 ]
 
+NEGATIVE_KEYWORDS = {
+    "stress",
+    "sad",
+    "lonely",
+    "anxious",
+    "panic",
+    "depressed",
+    "upset",
+    "hurt",
+    "crying",
+    "worried",
+    "overthinking",
+    "tired",
+    "exhausted",
+    "burned out",
+    "overwhelmed",
+    "hopeless",
+    "helpless",
+    "worthless",
+    "frustrated",
+    "angry",
+}
+
+MILD_NEGATIVE_KEYWORDS = {
+    "a bit stressed",
+    "slightly sad",
+    "a bit worried",
+    "feeling low",
+    "rough day",
+    "bad day",
+}
+
+POSITIVE_KEYWORDS = {
+    "happy",
+    "good",
+    "better",
+    "hopeful",
+    "grateful",
+    "calm",
+    "relieved",
+    "excited",
+}
+
 
 def normalize_text(text):
     return " ".join((text or "").lower().strip().split())
@@ -115,49 +161,36 @@ def detect_risk_level(text):
     return "low"
 
 
+def basic_sentiment_score(text_lower):
+    negative_hits = sum(1 for word in NEGATIVE_KEYWORDS if word in text_lower)
+    mild_hits = sum(1 for word in MILD_NEGATIVE_KEYWORDS if word in text_lower)
+    positive_hits = sum(1 for word in POSITIVE_KEYWORDS if word in text_lower)
+    return positive_hits - negative_hits - (0.5 * mild_hits)
+
+
 def detect_mood(user_text):
     text_lower = normalize_text(user_text)
-    negative_keywords = [
-        "stress",
-        "sad",
-        "lonely",
-        "anxious",
-        "panic",
-        "depressed",
-        "upset",
-        "hurt",
-        "crying",
-        "worried",
-        "overthinking",
-        "tired",
-        "exhausted",
-        "burned out",
-        "overwhelmed",
-        "hopeless",
-        "helpless",
-        "worthless",
-        "frustrated",
-        "angry",
-    ]
-    mild_negative_keywords = [
-        "a bit stressed",
-        "slightly sad",
-        "a bit worried",
-        "feeling low",
-        "rough day",
-        "bad day",
-    ]
-    if any(word in text_lower for word in negative_keywords):
+    if any(word in text_lower for word in NEGATIVE_KEYWORDS):
         return "negative"
-    if any(word in text_lower for word in mild_negative_keywords):
+    if any(word in text_lower for word in MILD_NEGATIVE_KEYWORDS):
         return "mild_negative"
 
-    score = TextBlob(user_text).sentiment.polarity
-    if score > 0.25:
+    if TextBlob is not None:
+        score = TextBlob(user_text).sentiment.polarity
+        if score > 0.25:
+            return "positive"
+        if score < -0.3:
+            return "negative"
+        if score < -0.1:
+            return "mild_negative"
+        return "neutral"
+
+    heuristic = basic_sentiment_score(text_lower)
+    if heuristic >= 1:
         return "positive"
-    if score < -0.3:
+    if heuristic <= -1:
         return "negative"
-    if score < -0.1:
+    if heuristic < 0:
         return "mild_negative"
     return "neutral"
 
@@ -302,4 +335,3 @@ def get_bot_response(user_input, emotion, history=None):
     base_reply = craft_reply(mood, emotion, history=history)
     recommendations = generate_recommendations(emotion)
     return f"{empathy}\n\n{base_reply}\n\nSuggested next steps:\n{recommendations}"
-

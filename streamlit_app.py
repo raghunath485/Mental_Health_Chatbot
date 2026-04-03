@@ -4,9 +4,32 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from chatbot import generate_wellness_snapshot, get_bot_response
+try:
+    import chatbot as chatbot_module
+except Exception as chatbot_import_error:
+    chatbot_module = None
+    CHATBOT_IMPORT_ERROR = str(chatbot_import_error)
+else:
+    CHATBOT_IMPORT_ERROR = None
+
 from emotion_detector import detect_emotion
 import mood_database as db
+
+
+def generate_wellness_snapshot(history):
+    if chatbot_module and hasattr(chatbot_module, "generate_wellness_snapshot"):
+        return chatbot_module.generate_wellness_snapshot(history)
+    return "Snapshot is temporarily unavailable because the chatbot module did not fully load."
+
+
+
+def get_bot_response(user_input, emotion, history=None):
+    if chatbot_module and hasattr(chatbot_module, "get_bot_response"):
+        return chatbot_module.get_bot_response(user_input, emotion, history)
+    return (
+        "I am here with you, but part of the support engine failed to load. "
+        "Please refresh the app or redeploy after syncing the latest code and dependencies."
+    )
 
 
 st.set_page_config(
@@ -408,6 +431,8 @@ def render_header():
         """,
         unsafe_allow_html=True,
     )
+    if CHATBOT_IMPORT_ERROR:
+        st.warning(f"Chat engine loaded in fallback mode: {CHATBOT_IMPORT_ERROR}")
 
 
 
