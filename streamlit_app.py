@@ -347,17 +347,26 @@ st.markdown(
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 0.7rem;
+        position: relative;
+        z-index: 3;
+        margin: -0.35rem 0 -0.15rem 0.15rem;
+        width: fit-content;
+        padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(16, 87, 86, 0.08);
+        box-shadow: 0 10px 24px rgba(25, 76, 77, 0.08);
+        backdrop-filter: blur(10px);
     }
 
     .avatar-orb {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.82rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.12em;
         position: relative;
@@ -369,7 +378,7 @@ st.markdown(
         content: "";
         position: absolute;
         inset: 1px;
-        border-radius: 12px;
+        border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.28);
         pointer-events: none;
     }
@@ -397,14 +406,14 @@ st.markdown(
     }
 
     .identity-name {
-        font-size: 0.92rem;
+        font-size: 0.84rem;
         font-weight: 700;
         color: var(--text-main);
         line-height: 1.1;
     }
 
     .identity-role {
-        font-size: 0.72rem;
+        font-size: 0.64rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--text-soft);
