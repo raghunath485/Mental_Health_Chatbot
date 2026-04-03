@@ -343,6 +343,73 @@ st.markdown(
         margin-left: 0 !important;
     }
 
+    .message-identity {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.7rem;
+    }
+
+    .avatar-orb {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .avatar-orb::after {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        pointer-events: none;
+    }
+
+    .avatar-user {
+        color: #15545b;
+        background:
+            radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), transparent 35%),
+            linear-gradient(135deg, #c5f3ec, #8fd8df);
+        box-shadow: 0 10px 20px rgba(80, 168, 175, 0.18);
+    }
+
+    .avatar-buddy {
+        color: #ffffff;
+        background:
+            radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 35%),
+            linear-gradient(135deg, #2f9d8f, #4a8bc2);
+        box-shadow: 0 10px 24px rgba(63, 123, 175, 0.22);
+    }
+
+    .identity-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .identity-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1.1;
+    }
+
+    .identity-role {
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+    }
+
     .stCaption {
         color: var(--text-soft) !important;
     }
@@ -405,6 +472,32 @@ def load_session(session_id):
         for row in db.get_session_messages(session_id)
     ]
 
+
+
+def render_message_identity(role):
+    if role == "user":
+        avatar_class = "avatar-orb avatar-user"
+        avatar_text = "YOU"
+        name = "You"
+        role_text = "Personal Check-In"
+    else:
+        avatar_class = "avatar-orb avatar-buddy"
+        avatar_text = "AI"
+        name = "Buddy"
+        role_text = "Wellness Guide"
+
+    st.markdown(
+        f"""
+        <div class='message-identity'>
+            <div class='{avatar_class}'>{avatar_text}</div>
+            <div class='identity-copy'>
+                <div class='identity-name'>{name}</div>
+                <div class='identity-role'>{role_text}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_header():
@@ -690,6 +783,7 @@ def main_chat():
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
+            render_message_identity(msg["role"])
             st.markdown(msg["content"])
             if msg["role"] == "assistant" and msg.get("emotion"):
                 st.caption(f"Detected emotion: {msg['emotion']}")
@@ -697,9 +791,11 @@ def main_chat():
     prompt = st.chat_input("How are you feeling today?")
     if prompt:
         with st.chat_message("user"):
+            render_message_identity("user")
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
+            render_message_identity("assistant")
             thinking = st.empty()
             thinking.markdown("Working through your check-in carefully...")
             time.sleep(0.6)
