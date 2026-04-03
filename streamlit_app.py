@@ -680,18 +680,17 @@ def main_chat():
         st.info("Start with a sentence or use one of the suggested prompts in the sidebar.")
 
     for msg in st.session_state.messages:
-        avatar = "You" if msg["role"] == "user" else "Buddy"
-        with st.chat_message(msg["role"], avatar=avatar):
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg["role"] == "assistant" and msg.get("emotion"):
                 st.caption(f"Detected emotion: {msg['emotion']}")
 
     prompt = st.chat_input("How are you feeling today?")
     if prompt:
-        with st.chat_message("user", avatar="You"):
+        with st.chat_message("user"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant", avatar="Buddy"):
+        with st.chat_message("assistant"):
             thinking = st.empty()
             thinking.markdown("Working through your check-in carefully...")
             time.sleep(0.6)
@@ -709,3 +708,6 @@ if not st.session_state.logged_in:
     login_page()
 else:
     main_chat()
+
+
+
