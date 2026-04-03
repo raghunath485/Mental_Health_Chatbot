@@ -39,10 +39,18 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown(
-    """
-    <style>
-    :root {
+for key, value in {
+    "logged_in": False,
+    "messages": [],
+    "current_session_id": None,
+    "show_dashboard": False,
+    "show_signup": False,
+    "bright_mode": False,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+theme_vars = """
         --bg-1: #f5fbfc;
         --bg-2: #edf8f6;
         --bg-3: #f8f4ec;
@@ -56,6 +64,27 @@ st.markdown(
         --aqua: #3478b7;
         --gold: #b98534;
         --shadow: 0 20px 50px rgba(31, 74, 83, 0.1);
+""" if st.session_state.bright_mode else """
+        --bg-1: #07161d;
+        --bg-2: #10252d;
+        --bg-3: #142e31;
+        --surface: rgba(14, 30, 36, 0.8);
+        --surface-strong: rgba(18, 36, 43, 0.92);
+        --line: rgba(125, 210, 201, 0.12);
+        --line-strong: rgba(125, 210, 201, 0.2);
+        --text-main: #ecf8f5;
+        --text-soft: #94b8b2;
+        --mint: #79d3bf;
+        --aqua: #86b9ea;
+        --gold: #d2ad62;
+        --shadow: 0 20px 50px rgba(0, 0, 0, 0.24);
+"""
+
+st.markdown(
+    f"""
+    <style>
+    :root {
+{theme_vars}
     }
 
     .stApp {
@@ -335,90 +364,6 @@ st.markdown(
         box-shadow: 0 8px 18px rgba(25, 76, 77, 0.05);
     }
 
-    [data-testid="stChatMessageAvatar"] {
-        display: none;
-    }
-
-    [data-testid="stChatMessageContent"] {
-        margin-left: 0 !important;
-    }
-
-    .message-identity {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        position: relative;
-        z-index: 3;
-        margin: -0.35rem 0 -0.15rem 0.15rem;
-        width: fit-content;
-        padding: 0.35rem 0.55rem 0.35rem 0.35rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(16, 87, 86, 0.08);
-        box-shadow: 0 10px 24px rgba(25, 76, 77, 0.08);
-        backdrop-filter: blur(10px);
-    }
-
-    .avatar-orb {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        position: relative;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    .avatar-orb::after {
-        content: "";
-        position: absolute;
-        inset: 1px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        pointer-events: none;
-    }
-
-    .avatar-user {
-        color: #15545b;
-        background:
-            radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), transparent 35%),
-            linear-gradient(135deg, #c5f3ec, #8fd8df);
-        box-shadow: 0 10px 20px rgba(80, 168, 175, 0.18);
-    }
-
-    .avatar-buddy {
-        color: #ffffff;
-        background:
-            radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 35%),
-            linear-gradient(135deg, #2f9d8f, #4a8bc2);
-        box-shadow: 0 10px 24px rgba(63, 123, 175, 0.22);
-    }
-
-    .identity-copy {
-        display: flex;
-        flex-direction: column;
-        gap: 0.1rem;
-    }
-
-    .identity-name {
-        font-size: 0.84rem;
-        font-weight: 700;
-        color: var(--text-main);
-        line-height: 1.1;
-    }
-
-    .identity-role {
-        font-size: 0.64rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--text-soft);
-    }
-
     .stCaption {
         color: var(--text-soft) !important;
     }
@@ -449,16 +394,6 @@ DEFAULT_SUGGESTIONS = [
     "Today felt better than yesterday and I want to understand why.",
 ]
 
-for key, value in {
-    "logged_in": False,
-    "messages": [],
-    "current_session_id": None,
-    "show_dashboard": False,
-    "show_signup": False,
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
-
 
 
 def reset_chat_state():
@@ -481,32 +416,6 @@ def load_session(session_id):
         for row in db.get_session_messages(session_id)
     ]
 
-
-
-def render_message_identity(role):
-    if role == "user":
-        avatar_class = "avatar-orb avatar-user"
-        avatar_text = "YOU"
-        name = "You"
-        role_text = "Personal Check-In"
-    else:
-        avatar_class = "avatar-orb avatar-buddy"
-        avatar_text = "AI"
-        name = "Buddy"
-        role_text = "Wellness Guide"
-
-    st.markdown(
-        f"""
-        <div class='message-identity'>
-            <div class='{avatar_class}'>{avatar_text}</div>
-            <div class='identity-copy'>
-                <div class='identity-name'>{name}</div>
-                <div class='identity-role'>{role_text}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 def render_header():
@@ -646,7 +555,7 @@ def dashboard():
             legend_title_text="Emotion",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#effbfd"),
+            font=dict(color="#153536" if st.session_state.bright_mode else "#ecf8f5"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -665,7 +574,7 @@ def dashboard():
             yaxis_title="Check-ins",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#effbfd"),
+            font=dict(color="#153536" if st.session_state.bright_mode else "#ecf8f5"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -692,8 +601,12 @@ def dashboard():
 def render_sidebar():
     with st.sidebar:
         st.title("Care workspace")
+        mode_label = "Bright mode" if st.session_state.bright_mode else "Dim mode"
+        if st.button(f"Toggle brightness: {mode_label}"):
+            st.session_state.bright_mode = not st.session_state.bright_mode
+            st.rerun()
         st.markdown(
-            "<div class='sidebar-card'><div class='section-kicker'>Navigation</div><div style='color:#cbe6ed;'>Move between live support, quick starts, and saved conversations without losing the calming atmosphere.</div></div>",
+            "<div class='sidebar-card'><div class='section-kicker'>Navigation</div><div style='color:var(--text-soft);'>Move between live support, quick starts, and saved conversations without losing the calming atmosphere.</div></div>",
             unsafe_allow_html=True,
         )
         if st.button("Open dashboard"):
@@ -792,7 +705,6 @@ def main_chat():
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            render_message_identity(msg["role"])
             st.markdown(msg["content"])
             if msg["role"] == "assistant" and msg.get("emotion"):
                 st.caption(f"Detected emotion: {msg['emotion']}")
@@ -800,11 +712,9 @@ def main_chat():
     prompt = st.chat_input("How are you feeling today?")
     if prompt:
         with st.chat_message("user"):
-            render_message_identity("user")
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            render_message_identity("assistant")
             thinking = st.empty()
             thinking.markdown("Working through your check-in carefully...")
             time.sleep(0.6)
