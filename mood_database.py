@@ -87,6 +87,13 @@ def create_account(username, password):
     try:
         conn = get_connection()
         cursor = conn.cursor()
+        existing_user = cursor.execute(
+            "SELECT 1 FROM users WHERE lower(trim(username)) = lower(?)",
+            (username,),
+        ).fetchone()
+        if existing_user:
+            conn.close()
+            return False, None, "Username already exists."
         hashed_pw = generate_password_hash(password)
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
         user_id = cursor.lastrowid
@@ -99,14 +106,48 @@ def create_account(username, password):
         return False, None, str(exc)
 
 
+def _password_matches(stored_password, provided_password):
+    normalized_password = provided_password or ""
+    stored_password = stored_password or ""
+
+    if not stored_password.startswith(("scrypt:", "pbkdf2:")):
+        legacy_match = stored_password == normalized_password
+        return legacy_match, legacy_match
+
+    try:
+        return check_password_hash(stored_password, normalized_password), False
+    except ValueError:
+        return False, False
+
+
 def verify_user(username, password):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, password FROM users WHERE username = ?", ((username or "").strip(),))
+    clean_username = (username or "").strip()
+    cursor.execute(
+        """
+        SELECT id, password, username
+        FROM users
+        WHERE username = ?
+           OR lower(trim(username)) = lower(?)
+        ORDER BY CASE WHEN username = ? THEN 0 ELSE 1 END
+        LIMIT 1
+        """,
+        (clean_username, clean_username, clean_username),
+    )
     user = cursor.fetchone()
+    if user:
+        is_valid, should_upgrade = _password_matches(user["password"], password)
+        if is_valid:
+            if should_upgrade:
+                cursor.execute(
+                    "UPDATE users SET password = ? WHERE id = ?",
+                    (generate_password_hash(password or ""), user["id"]),
+                )
+                conn.commit()
+            conn.close()
+            return user["id"]
     conn.close()
-    if user and check_password_hash(user["password"], password):
-        return user["id"]
     return None
 
 
