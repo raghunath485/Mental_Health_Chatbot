@@ -56,12 +56,17 @@ theme_vars = """
         --bg-3: #f8f4ec;
         --surface: rgba(255, 255, 255, 0.82);
         --surface-strong: rgba(255, 255, 255, 0.94);
+        --surface-solid: #ffffff;
+        --card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 250, 248, 0.92));
+        --card-border: rgba(16, 87, 86, 0.12);
         --line: rgba(16, 87, 86, 0.1);
         --line-strong: rgba(16, 87, 86, 0.16);
         --text-main: #153536;
-        --text-soft: #55797a;
+        --text-soft: #4d7172;
+        --text-muted: #7c9997;
+        --text-strong: #0d2a2f;
         --mint: #2f9d8f;
-        --aqua: #3478b7;
+        --aqua: #225f98;
         --gold: #b98534;
         --shadow: 0 20px 50px rgba(31, 74, 83, 0.1);
 """ if st.session_state.bright_mode else """
@@ -70,10 +75,15 @@ theme_vars = """
         --bg-3: #142e31;
         --surface: rgba(14, 30, 36, 0.8);
         --surface-strong: rgba(18, 36, 43, 0.92);
+        --surface-solid: #11242b;
+        --card-bg: linear-gradient(180deg, rgba(18, 36, 43, 0.96), rgba(14, 30, 36, 0.9));
+        --card-border: rgba(125, 210, 201, 0.14);
         --line: rgba(125, 210, 201, 0.12);
         --line-strong: rgba(125, 210, 201, 0.2);
         --text-main: #ecf8f5;
         --text-soft: #94b8b2;
+        --text-muted: #78a09a;
+        --text-strong: #f6fffc;
         --mint: #79d3bf;
         --aqua: #86b9ea;
         --gold: #d2ad62;
@@ -127,7 +137,7 @@ __THEME_VARS__
         overflow: hidden;
         background:
             radial-gradient(circle at top right, rgba(83, 187, 180, 0.18), transparent 30%),
-            linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(242, 250, 248, 0.9));
+            var(--card-bg);
         border: 1px solid var(--line-strong);
         border-radius: 28px;
         padding: 1.7rem;
@@ -167,12 +177,12 @@ __THEME_VARS__
         font-weight: 700;
         margin-bottom: 0.7rem;
         max-width: 700px;
-        color: #183938;
+        color: var(--text-strong);
     }
 
     .hero-copy {
         max-width: 720px;
-        color: #4b6f70;
+        color: var(--text-soft);
         line-height: 1.7;
         margin-bottom: 1rem;
         font-size: 1rem;
@@ -186,8 +196,8 @@ __THEME_VARS__
     }
 
     .hero-chip {
-        background: rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(16, 87, 86, 0.1);
+        background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
+        border: 1px solid var(--card-border);
         border-radius: 18px;
         padding: 0.85rem 0.9rem;
         box-shadow: 0 8px 20px rgba(25, 76, 77, 0.05);
@@ -204,7 +214,7 @@ __THEME_VARS__
     .hero-chip-value {
         font-size: 1rem;
         font-weight: 600;
-        color: #1d4a49;
+        color: var(--text-strong);
         line-height: 1.5;
     }
 
@@ -228,8 +238,8 @@ __THEME_VARS__
     }
 
     .metric-tile {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(249, 253, 252, 0.88));
-        border: 1px solid rgba(16, 87, 86, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 22px;
         padding: 1rem;
         min-height: 118px;
@@ -247,7 +257,7 @@ __THEME_VARS__
     .metric-value {
         font-size: 1.9rem;
         font-weight: 700;
-        color: var(--text-main);
+        color: var(--text-strong);
         margin-bottom: 0.3rem;
     }
 
@@ -258,12 +268,13 @@ __THEME_VARS__
     }
 
     .reflection-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 253, 252, 0.9));
-        border: 1px solid rgba(16, 87, 86, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 20px;
         padding: 1rem;
         margin-bottom: 0.8rem;
         box-shadow: 0 8px 22px rgba(25, 76, 77, 0.05);
+        color: var(--text-main);
     }
 
     .reflection-meta {
@@ -275,7 +286,7 @@ __THEME_VARS__
     }
 
     .chat-shell {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 252, 251, 0.9));
+        background: var(--card-bg);
         border: 1px solid var(--line);
         border-radius: 28px;
         padding: 1.1rem;
@@ -318,16 +329,17 @@ __THEME_VARS__
     }
 
     .sidebar-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 253, 252, 0.82));
-        border: 1px solid rgba(16, 87, 86, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 18px;
         padding: 0.9rem;
         margin-bottom: 0.85rem;
+        color: var(--text-main);
     }
 
     .stSidebar > div:first-child {
-        background: linear-gradient(180deg, rgba(248, 252, 251, 0.98), rgba(241, 249, 247, 0.96));
-        border-right: 1px solid rgba(16, 87, 86, 0.07);
+        background: linear-gradient(180deg, color-mix(in srgb, var(--surface-solid) 98%, transparent), color-mix(in srgb, var(--surface-solid) 94%, var(--bg-2)));
+        border-right: 1px solid var(--card-border);
     }
 
     .stButton > button {
@@ -348,27 +360,38 @@ __THEME_VARS__
     }
 
     .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.84);
-        border: 1px solid rgba(16, 87, 86, 0.12);
+        background: color-mix(in srgb, var(--surface-solid) 92%, transparent);
+        border: 1px solid var(--card-border);
         border-radius: 14px;
         color: var(--text-main);
     }
 
     .stChatInputContainer > div {
-        background: rgba(255, 255, 255, 0.86);
-        border: 1px solid rgba(16, 87, 86, 0.12);
+        background: color-mix(in srgb, var(--surface-solid) 92%, transparent);
+        border: 1px solid var(--card-border);
         border-radius: 18px;
     }
 
     .stChatMessage {
-        background: rgba(255, 255, 255, 0.86) !important;
-        border: 1px solid rgba(16, 87, 86, 0.09);
+        background: color-mix(in srgb, var(--surface-solid) 90%, transparent) !important;
+        border: 1px solid var(--card-border);
         border-radius: 22px !important;
         box-shadow: 0 8px 18px rgba(25, 76, 77, 0.05);
     }
 
     .stCaption {
         color: var(--text-soft) !important;
+    }
+
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] li,
+    div[data-testid="stMarkdownContainer"] span,
+    .stChatMessage p,
+    .stChatMessage span,
+    .stChatInput textarea,
+    [data-testid="stChatInput"] textarea,
+    [data-testid="stBaseButton-secondary"] {
+        color: var(--text-main) !important;
     }
 
     h1, h2, h3, h4, h5, h6,
@@ -384,7 +407,9 @@ __THEME_VARS__
     section[data-testid="stSidebar"] h3,
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] .stMarkdown {
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] .stCaption,
+    section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
         color: var(--text-main) !important;
     }
 
